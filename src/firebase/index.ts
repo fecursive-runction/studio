@@ -2,23 +2,36 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, setDoc, addDoc, updateDoc, deleteDoc, CollectionReference, DocumentReference, SetOptions } from 'firebase/firestore';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore, setDoc, addDoc, updateDoc, deleteDoc, CollectionReference, DocumentReference, SetOptions } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 let firebaseApp: FirebaseApp;
+let auth: Auth;
+let firestore: Firestore;
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase() {
+// This function ensures Firebase is initialized only once.
+function initializeFirebaseServices() {
   if (!getApps().length) {
     firebaseApp = initializeApp(firebaseConfig);
   } else {
     firebaseApp = getApp();
   }
-
-  return getSdks(firebaseApp);
+  auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
+  
+  return { firebaseApp, auth, firestore };
 }
+
+// Call initialization immediately upon module load
+const firebaseServices = initializeFirebaseServices();
+
+export function initializeFirebase() {
+    return firebaseServices;
+}
+
 
 export function getSdks(firebaseApp: FirebaseApp) {
   return {
