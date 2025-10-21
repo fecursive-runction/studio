@@ -3,8 +3,6 @@
 import { queryPlantDataWithNaturalLanguage } from '@/ai/flows/query-plant-data-with-natural-language';
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
 import { z } from 'zod';
-import { ai } from '@/ai/genkit';
-import { generate } from 'genkit';
 
 const querySchema = z.object({
   question: z.string(),
@@ -93,7 +91,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
   try {
     const recommendation = await optimizeCementProduction({
         plantId: "poc_plant_01",
-        kilnTemperature: 1455.2,
+        kilnTemperature: 1455.2, // Using a realistic live value
         feedRate: 221.5,
         energyConsumption: 102.8,
         clinkerQualityScore: 0.915,

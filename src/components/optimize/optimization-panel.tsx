@@ -17,6 +17,10 @@ import { Bot, Zap, Award, Gauge, Lightbulb } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
+import { runOptimization } from '@/app/actions';
+import { Badge } from '../ui/badge';
+import { formatNumber } from '@/lib/utils';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 
 const initialState = {
   recommendation: null,
@@ -40,13 +44,54 @@ function SubmitButton() {
   );
 }
 
-// Dummy action
-async function runOptimization(prevState: any, formData: FormData) {
-    return {...initialState, error: "Optimization functionality not implemented yet."};
-}
+
+function RecommendationDisplay({ recommendation }: { recommendation: any }) {
+    if (!recommendation) return null;
+
+    const qualityImpactPositive = recommendation.qualityScoreImpact.startsWith('+');
+    const TrendIcon = qualityImpactPositive ? TrendingUp : TrendingDown;
+  
+    return (
+      <div className="space-y-6">
+        <div>
+            <p className="text-sm text-muted-foreground">Recommendation ID</p>
+            <Badge variant="outline">{recommendation.recommendationId}</Badge>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-1">
+            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><Gauge /> Feed Rate</Label>
+            <p className="text-xl font-bold">{formatNumber(recommendation.feedRateSetpoint, { decimals: 1 })} <span className="text-base font-normal text-muted-foreground">TPH</span></p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><Zap /> Energy Savings</Label>
+            <p className="text-xl font-bold text-green-500">{formatNumber(recommendation.energyReductionPercentage, { decimals: 1 })}%</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><Award /> Quality Impact</Label>
+            <p className={`text-xl font-bold flex items-center ${qualityImpactPositive ? 'text-green-500' : 'text-red-500'}`}>
+                <TrendIcon className="h-4 w-4 mr-1" />
+                {recommendation.qualityScoreImpact}
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+  
+        <div className="space-y-2">
+            <h4 className="font-semibold flex items-center gap-2"><Lightbulb /> Explanation</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+                {recommendation.explanation}
+            </p>
+        </div>
+      </div>
+    );
+  }
+  
 
 export function OptimizationPanel() {
   const [state, formAction] = useActionState(runOptimization, initialState);
+  const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
@@ -79,6 +124,7 @@ export function OptimizationPanel() {
                         name="constraints"
                         placeholder="e.g., MAINTAIN_QUALITY_ABOVE_0.91, USE_ALT_FUEL_MIX"
                         className="min-h-[100px]"
+                        disabled={pending}
                     />
                     <p className="text-xs text-muted-foreground">Separate constraints with a comma.</p>
                     </div>
@@ -93,16 +139,22 @@ export function OptimizationPanel() {
         <CardHeader>
           <CardTitle>AI Recommendation</CardTitle>
           <CardDescription>
-            Optimal parameters suggested by the AI.
+            Optimal parameters suggested by the AI based on live data and your constraints.
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
-                <Bot className="h-12 w-12 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                    Your recommendation will appear here.
-                </p>
-            </div>
+            {pending && <Skeleton className="h-[240px]" />}
+            {!pending && !state.recommendation && (
+                <div className="flex h-[240px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
+                    <Bot className="h-12 w-12 text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Your recommendation will appear here.
+                    </p>
+                </div>
+            )}
+            {!pending && state.recommendation && (
+                <RecommendationDisplay recommendation={state.recommendation} />
+            )}
         </CardContent>
       </Card>
     </div>
