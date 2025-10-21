@@ -47,25 +47,21 @@ const prompt = ai.definePrompt({
     Plant ID: '{{{plantId}}}'
     Question: {{{question}}}
 
-    {{#if (eq state 'generate_sql')}}
+    IF the state is 'generate_sql':
     Your task is to generate a valid BigQuery SQL query to answer the question.
     - ALWAYS filter by the provided plant_id.
     - Use CURRENT_TIMESTAMP() for the current time.
     - When asked about "yesterday", use a date range for the previous day.
     - Output a JSON object containing only the generated 'sql' query.
-    {{/if}}
-
-    {{#if (eq state 'summarize_results')}}
+    
+    ELSE IF the state is 'summarize_results':
     You have been provided with the results from executing the SQL query.
-    Query Results:
-    \`\`\`json
-    {{{json results}}}
-    \`\`\`
+    Query Results: {{#if results}} {{{results}}} {{else}} [] {{/if}}
     Your task is to analyze these results and provide a concise, easy-to-understand natural language summary.
     - Address the original question directly in your summary.
     - If the results are empty, state that no data was found for the given criteria.
     - Output a JSON object containing only the 'summary'.
-    {{/if}}
+    END IF
     `,
   });
   
