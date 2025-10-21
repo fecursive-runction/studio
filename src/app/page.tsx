@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -12,45 +11,29 @@ import {
   BarChart,
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
-import { alerts as mockAlerts } from '@/lib/data';
+import { alerts as mockAlerts, liveMetrics, historicalTemperatureData } from '@/lib/data';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+
 
 export default function DashboardPage() {
-  const firestore = useFirestore();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const liveMetricsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'plant-metrics/live');
-  }, [firestore]);
-  const { data: liveMetrics, isLoading: isLiveMetricsLoading } = useDoc<any>(liveMetricsRef);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const historicalDataQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'production_metrics'), orderBy('timestamp', 'desc'), limit(288)); // last 24h at 5 min intervals
-  }, [firestore]);
-
-  const { data: historicalData, isLoading: isHistoricalDataLoading } = useCollection<any>(historicalDataQuery);
-
-  const formattedHistoricalData = (historicalData || [])
-    .map(d => ({
-        time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        temperature: parseFloat(d.kiln_temp.toFixed(1))
-    }))
-    .reverse();
-    
-  const chartData = formattedHistoricalData.map((d, i) => i % 36 === 0 ? d : ({...d, time: ''}));
-
+  const chartData = historicalTemperatureData.map((d, i) => i % 36 === 0 ? d : ({...d, time: ''}));
 
   return (
-    <ProtectedRoute>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-            {isLiveMetricsLoading || !liveMetrics ? (
+            {isLoading ? (
                 <>
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
@@ -75,14 +58,14 @@ export default function DashboardPage() {
                     />
                     <MetricCard
                         title="Energy Consumption"
-                        value={liveMetrics.energy_kwh_per_ton.toFixed(1)}
+                        value={liveMetrics.energy_kwh.toFixed(1)}
                         unit="kWh/t"
                         icon="Zap"
                         trend={liveMetrics.energy_kwh_trend || 0}
                     />
                     <MetricCard
                         title="Clinker Quality"
-                        value={liveMetrics.clinker_quality_score.toFixed(3)}
+                        value={liveMetrics.quality_score.toFixed(3)}
                         unit="Score"
                         icon="Award"
                         trend={liveMetrics.quality_score_trend || 0}
@@ -99,7 +82,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              {isHistoricalDataLoading ? (
+              {isLoading ? (
                 <Skeleton className="h-[350px]" />
               ) : (
                 <TemperatureChart data={chartData} />
@@ -115,10 +98,10 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isLiveMetricsLoading || !liveMetrics ? (
+                {isLoading ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
-                    <QualityScoreGauge value={liveMetrics.clinker_quality_score} />
+                    <QualityScoreGauge value={liveMetrics.quality_score} />
                 )}
               </CardContent>
             </Card>
@@ -126,6 +109,5 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-    </ProtectedRoute>
   );
 }
