@@ -58,9 +58,15 @@ export function useSidebar() {
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [open, setOpen] = React.useState(false); // For mobile sheet
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Effect to handle window resize
   React.useEffect(() => {
+    if (!isMounted) return;
     const handleResize = () => {
       if (window.innerWidth >= 768) { // md breakpoint
         setOpen(false); // Close mobile sheet on desktop
@@ -68,7 +74,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isMounted]);
 
   const value = {
     isCollapsed,
@@ -77,6 +83,15 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     toggleCollapsed: () => setIsCollapsed(prev => !prev),
   };
 
+  if (!isMounted) {
+    return (
+        <SidebarContext.Provider value={value}>
+            <TooltipProvider>
+                {children}
+            </TooltipProvider>
+        </SidebarContext.Provider>
+    )
+  }
 
   return (
     <SidebarContext.Provider value={value}>
