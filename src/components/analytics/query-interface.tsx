@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react';
 import { runQuery } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,7 +50,7 @@ function SubmitButton() {
 }
 
 export function QueryInterface() {
-  const [state, formAction] = useFormState(runQuery, initialState);
+  const [state, formAction] = useActionState(runQuery, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 

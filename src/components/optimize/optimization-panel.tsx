@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react';
 import { runOptimization } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,7 +43,7 @@ function SubmitButton() {
 }
 
 export function OptimizationPanel() {
-  const [state, formAction] = useFormState(runOptimization, initialState);
+  const [state, formAction] = useActionState(runOptimization, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
