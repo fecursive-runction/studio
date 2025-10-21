@@ -1,15 +1,25 @@
+
 'use server';
 
-import { BigQuery, Table, Dataset } from '@google-cloud/bigquery';
+import { BigQuery } from '@google-cloud/bigquery';
 
 let bigquery: BigQuery;
 
 function getBigQueryClient() {
     if (!bigquery) {
-      // In a production environment, you would manage credentials more securely,
-      // e.g., using Application Default Credentials on Cloud Run.
-      // For local development, ensure you've authenticated via `gcloud auth application-default login`.
-      bigquery = new BigQuery();
+      // On Vercel or other serverless platforms, credentials will be stored in an environment variable.
+      // Locally, it will fall back to using Application Default Credentials (`gcloud auth application-default login`).
+      const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
+      
+      if (credentialsJson) {
+        console.log("Found GOOGLE_CREDENTIALS_JSON environment variable. Initializing BigQuery client with service account.");
+        const credentials = JSON.parse(credentialsJson);
+        bigquery = new BigQuery({ credentials });
+      } else {
+        console.log("No GOOGLE_CREDENTIALS_JSON found. Initializing BigQuery client with Application Default Credentials.");
+        // For local development, ensure you've authenticated via `gcloud auth application-default login`.
+        bigquery = new BigQuery();
+      }
     }
     return bigquery;
 }
