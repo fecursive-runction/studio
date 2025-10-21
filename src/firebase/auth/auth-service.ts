@@ -1,8 +1,7 @@
 'use client';
 
 import {
-  getAuth,
-  signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
   signOut,
 } from 'firebase/auth';
@@ -13,10 +12,13 @@ const provider = new GoogleAuthProvider();
 
 export async function handleGoogleSignIn() {
   try {
-    await signInWithPopup(auth, provider);
-    // The onAuthStateChanged listener in FirebaseProvider will handle the redirect
+    // Using signInWithRedirect instead of signInWithPopup
+    await signInWithRedirect(auth, provider);
+    // The user will be redirected to Google's sign-in page.
+    // After sign-in, they will be redirected back, and the onAuthStateChanged
+    // listener in FirebaseProvider will handle the authentication result.
   } catch (error) {
-    console.error('Error during Google Sign-In:', error);
+    console.error('Error during Google Sign-In redirect:', error);
   }
 }
 
