@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Factory, LogOut, PanelLeft, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import { MainNav } from './main-nav';
@@ -30,6 +30,8 @@ export function AppHeader() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
+          <SheetTitle className="sr-only">Main Menu</SheetTitle>
+          <SheetDescription className="sr-only">The main navigation for the application.</SheetDescription>
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="/"
