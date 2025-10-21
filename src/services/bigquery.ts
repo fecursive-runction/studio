@@ -1,6 +1,6 @@
 'use server';
 
-import { BigQuery } from '@google-cloud/bigquery';
+import { BigQuery, Table, Dataset } from '@google-cloud/bigquery';
 
 let bigquery: BigQuery;
 
@@ -14,6 +14,52 @@ function getBigQueryClient() {
     return bigquery;
 }
 
+const DATASET_ID = 'cement_plant_data';
+const TABLE_ID = 'production_metrics';
+
+// Schema for the production_metrics table
+const schema = [
+    { name: 'timestamp', type: 'TIMESTAMP', mode: 'REQUIRED' },
+    { name: 'plant_id', type: 'STRING', mode: 'REQUIRED' },
+    { name: 'kiln_temp', type: 'FLOAT' },
+    { name: 'feed_rate', type: 'FLOAT' },
+    { name: 'energy_kwh_per_ton', type: 'FLOAT' },
+    { name: 'clinker_quality_score', type: 'FLOAT' },
+];
+
+
+/**
+ * Ensures that the required BigQuery dataset and table exist.
+ * Creates them if they are missing.
+ */
+async function ensureBigQueryTableExists() {
+    const bq = getBigQueryClient();
+    const dataset = bq.dataset(DATASET_ID);
+    const [datasetExists] = await dataset.exists();
+
+    if (!datasetExists) {
+        console.log(`Dataset ${DATASET_ID} does not exist. Creating...`);
+        await dataset.create({ location: 'US' });
+        console.log(`Dataset ${DATASET_ID} created.`);
+    }
+
+    const table = dataset.table(TABLE_ID);
+    const [tableExists] = await table.exists();
+
+    if (!tableExists) {
+        console.log(`Table ${TABLE_ID} does not exist. Creating...`);
+        await table.create({
+            schema: schema,
+            timePartitioning: {
+                type: 'DAY',
+                field: 'timestamp',
+            },
+        });
+        console.log(`Table ${TABLE_ID} created.`);
+    }
+}
+
+
 /**
  * Executes a SQL query against the Google BigQuery database.
  * 
@@ -22,6 +68,7 @@ function getBigQueryClient() {
  * @throws An error if the query fails to execute.
  */
 export async function executeBigQuery(sql: string): Promise<Record<string, any>[]> {
+  await ensureBigQueryTableExists();
   const bq = getBigQueryClient();
   const options = {
     query: sql,
@@ -50,6 +97,7 @@ export async function executeBigQuery(sql: string): Promise<Record<string, any>[
  * @throws An error if the insertion fails.
  */
 export async function insertIntoBigQuery(datasetId: string, tableId: string, rows: any | any[]) {
+    await ensureBigQueryTableExists();
     const bq = getBigQueryClient();
     try {
         await bq.dataset(datasetId).table(tableId).insert(rows);
