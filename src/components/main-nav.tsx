@@ -8,12 +8,9 @@ import {
   BrainCircuit,
   Bot,
 } from 'lucide-react';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from './ui/sidebar-v2';
 
 export function MainNav() {
   const pathname = usePathname();
-  const { setOpen } = useSidebar();
-
   const menuItems = [
     {
       href: '/',
@@ -32,27 +29,23 @@ export function MainNav() {
     },
   ];
 
-  const handleLinkClick = () => {
-    if (window.innerWidth < 768) {
-      setOpen(false);
-    }
-  };
-
   return (
-    <SidebarMenu>
-        {menuItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-                <Link href={item.href} onClick={handleLinkClick}>
-                    <SidebarMenuButton 
-                        isActive={pathname === item.href} 
-                        icon={<item.icon />}
-                        className="w-full justify-start"
-                    >
-                        {item.label}
-                    </SidebarMenuButton>
-                </Link>
-            </SidebarMenuItem>
-        ))}
-    </SidebarMenu>
+    <nav className="flex flex-col items-start gap-4 px-2 sm:py-5">
+      {menuItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+            {
+              'bg-muted text-primary': pathname === item.href,
+            }
+          )}
+        >
+          <item.icon className="h-4 w-4" />
+          {item.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
