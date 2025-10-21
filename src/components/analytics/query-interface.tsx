@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import { runQuery } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -46,6 +45,11 @@ function SubmitButton() {
       )}
     </Button>
   );
+}
+
+// Dummy action
+async function runQuery(prevState: any, formData: FormData) {
+    return { ...initialState, error: "Query functionality not implemented yet."};
 }
 
 export function QueryInterface() {
@@ -100,13 +104,7 @@ export function QueryInterface() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {state.sql ? (
-                                    <pre className="mt-2 w-full overflow-x-auto rounded-md bg-muted p-4 text-sm">
-                                        <code>{state.sql}</code>
-                                    </pre>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">SQL will appear here...</p>
-                                )}
+                                <p className="text-sm text-muted-foreground">SQL will appear here...</p>
                             </CardContent>
                         </Card>
                         <Card>
@@ -117,11 +115,7 @@ export function QueryInterface() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {state.summary ? (
-                                    <p className="text-sm">{state.summary}</p>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">Summary will appear here...</p>
-                                )}
+                                <p className="text-sm text-muted-foreground">Summary will appear here...</p>
                             </CardContent>
                         </Card>
                     </div>
@@ -134,26 +128,7 @@ export function QueryInterface() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {state.results && Array.isArray(state.results) && state.results.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            {Object.keys(state.results[0]).map((key) => <TableHead key={key}>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</TableHead>)}
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {state.results.map((row, i) => (
-                                            <TableRow key={i}>
-                                                {Object.values(row).map((value, j) => (
-                                                    <TableCell key={j}>{typeof value === 'number' ? value.toFixed(2) : String(value)}</TableCell>
-                                                ))}
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">Results will appear here...</p>
-                            )}
+                            <p className="text-sm text-muted-foreground">Results will appear here...</p>
                         </CardContent>
                     </Card>
                 </div>

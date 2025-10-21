@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import { runOptimization } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -39,6 +38,11 @@ function SubmitButton() {
       )}
     </Button>
   );
+}
+
+// Dummy action
+async function runOptimization(prevState: any, formData: FormData) {
+    return {...initialState, error: "Optimization functionality not implemented yet."};
 }
 
 export function OptimizationPanel() {
@@ -93,47 +97,12 @@ export function OptimizationPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {state.recommendation ? (
-                 <div className="space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
-                   <div className="rounded-lg border bg-background p-4">
-                     <div className="text-sm text-muted-foreground flex items-center gap-2"><Gauge className="h-4 w-4"/>Feed Rate</div>
-                     <div className="text-2xl font-bold">{state.recommendation.feedRateSetpoint.toFixed(1)} <span className="text-base font-normal">TPH</span></div>
-                   </div>
-                   <div className="rounded-lg border bg-background p-4">
-                     <div className="text-sm text-muted-foreground flex items-center gap-2"><Zap className="h-4 w-4"/>Energy Reduction</div>
-                     <div className="text-2xl font-bold">{state.recommendation.energyReductionPercentage.toFixed(1)}%</div>
-                   </div>
-                   <div className="rounded-lg border bg-background p-4">
-                     <div className="text-sm text-muted-foreground flex items-center gap-2">⛽ Fuel Mix Ratio</div>
-                     <div className="text-2xl font-bold">{(state.recommendation.fuelMixRatio * 100).toFixed(0)}%</div>
-                   </div>
-                   <div className="rounded-lg border bg-background p-4">
-                     <div className="text-sm text-muted-foreground flex items-center gap-2"><Award className="h-4 w-4"/>Quality Impact</div>
-                     <div className="text-2xl font-bold">{state.recommendation.qualityScoreImpact}</div>
-                   </div>
-                 </div>
-                 
-                 <Separator />
-                 
-                 <div>
-                   <h4 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-4 w-4 text-yellow-400"/>Explanation</h4>
-                   <p className="text-sm text-muted-foreground">{state.recommendation.explanation}</p>
-                 </div>
-  
-                  <div className="text-xs text-muted-foreground pt-4">
-                   Recommendation ID: {state.recommendation.recommendationId}
-                  </div>
-  
-               </div>
-            ) : (
-                <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
-                    <Bot className="h-12 w-12 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        Your recommendation will appear here.
-                    </p>
-                </div>
-            )}
+            <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
+                <Bot className="h-12 w-12 text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Your recommendation will appear here.
+                </p>
+            </div>
         </CardContent>
       </Card>
     </div>
