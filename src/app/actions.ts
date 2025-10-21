@@ -35,11 +35,23 @@ export async function runQuery(prevState: any, formData: FormData) {
     // Mock BigQuery results based on the question
     const mockResults = getMockResults(question);
     
-    const summaryPrompt = `Based on the user's question and the following data results, provide a short, natural language summary.
+    const summaryPrompt = `You are an expert at summarizing data. Based on the user's question and the following data, provide a short, natural language summary.
+
+    User Question: "What was the average kiln temperature and feed rate yesterday?"
+    Data:
+    [{"avg_temp": 1452.3, "avg_feed_rate": 215.7, "avg_quality_score": 0.92}]
+    Summary:
+    Yesterday, the average kiln temperature was 1452.3°C and the average feed rate was 215.7 TPH.
+    
+    User Question: "What was the total production during the last shift?"
+    Data:
+    [{"production_total_tons": 1720, "clinker_quality_avg": 0.91, "alerts_count": 3}]
+    Summary:
+    The total production during the last shift was 1720 tons with an average clinker quality score of 0.91. There were 3 alerts during this period.
+
     User Question: "${question}"
     Data:
     ${JSON.stringify(mockResults)}
-    
     Summary:`;
 
     const summaryResponse = await generate({
