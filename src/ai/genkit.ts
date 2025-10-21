@@ -1,9 +1,7 @@
+'use server';
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
-import {registerHelpers} from './helpers';
-
-// Register custom Handlebars helpers
-registerHelpers();
+import './helpers'; // Import to run helper registration
 
 export const ai = genkit({
   plugins: [googleAI()],

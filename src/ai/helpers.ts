@@ -1,9 +1,10 @@
 'use server';
 import { Handlebars } from 'genkit/tools';
 
-export function registerHelpers() {
-  // Check if helpers are already registered to avoid errors on hot-reloads
-  if (Handlebars.helpers.eq) return;
+let helpersRegistered = false;
+
+function registerHelpers() {
+  if (helpersRegistered) return;
 
   Handlebars.registerHelper('eq', function (a, b) {
     return a === b;
@@ -12,4 +13,8 @@ export function registerHelpers() {
   Handlebars.registerHelper('json', function (context) {
     return JSON.stringify(context);
   });
+
+  helpersRegistered = true;
 }
+
+registerHelpers();
