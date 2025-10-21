@@ -22,6 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { BrainCircuit, Code, Lightbulb, Search, Table as TableIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { runQuery } from '@/app/actions';
 
 const initialState = {
   sql: null,
@@ -47,13 +48,9 @@ function SubmitButton() {
   );
 }
 
-// Dummy action
-async function runQuery(prevState: any, formData: FormData) {
-    return { ...initialState, error: "Query functionality not implemented yet."};
-}
-
 export function QueryInterface() {
   const [state, formAction] = useActionState(runQuery, initialState);
+  const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
@@ -65,7 +62,34 @@ export function QueryInterface() {
         description: state.error,
       });
     }
-  }, [state.error, toast]);
+    if (state.sql) {
+        formRef.current?.reset();
+    }
+  }, [state, toast]);
+
+  const renderResultsTable = () => {
+    if (!state.results) return null;
+    if (state.results.length === 0) return <p className="text-sm text-muted-foreground">The query returned no results.</p>;
+
+    const headers = Object.keys(state.results[0]);
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {state.results.map((row, rowIndex) => (
+                    <TableRow key={rowIndex}>
+                        {headers.map(header => <TableCell key={`${rowIndex}-${header}`}>{JSON.stringify(row[header])}</TableCell>)}
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    )
+  }
   
   return (
     <div className="space-y-8">
@@ -88,52 +112,68 @@ export function QueryInterface() {
                         placeholder="e.g., What was the average kiln temperature yesterday?"
                         required
                         className="flex-1"
+                        disabled={pending}
                     />
                     <SubmitButton />
                 </CardContent>
             </Card>
+        </form>
 
-            <div className="mt-8">
-                <div className="space-y-8">
-                    <div className="grid gap-8 md:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                    <Code className="h-5 w-5 text-muted-foreground" />
-                                    Generated SQL
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">SQL will appear here...</p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                    <Lightbulb className="h-5 w-5 text-muted-foreground" />
-                                    AI Summary
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">Summary will appear here...</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
+        <div className="mt-8">
+            <div className="space-y-8">
+                <div className="grid gap-8 md:grid-cols-2">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
-                                <TableIcon className="h-5 w-5 text-muted-foreground" />
-                                Query Results
+                                <Code className="h-5 w-5 text-muted-foreground" />
+                                Generated SQL
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-muted-foreground">Results will appear here...</p>
+                            {pending && !state.sql && <Skeleton className="h-24" />}
+                            {state.sql ? (
+                                <pre className="p-4 bg-muted rounded-lg text-sm overflow-x-auto"><code>{state.sql}</code></pre>
+                            ): (
+                                !pending && <p className="text-sm text-muted-foreground">SQL will appear here...</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Lightbulb className="h-5 w-5 text-muted-foreground" />
+                                AI Summary
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {pending && !state.summary && <Skeleton className="h-24" />}
+                            {state.summary ? (
+                                <p className="text-sm">{state.summary}</p>
+                            ) : (
+                                !pending && <p className="text-sm text-muted-foreground">Summary will appear here...</p>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <TableIcon className="h-5 w-5 text-muted-foreground" />
+                            Query Results
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {pending && !state.results && <Skeleton className="h-32" />}
+                        {state.results ? (
+                           renderResultsTable()
+                        ) : (
+                            !pending && <p className="text-sm text-muted-foreground">Results will appear here...</p>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
-        </form>
+        </div>
     </div>
   );
 }

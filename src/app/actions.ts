@@ -27,7 +27,8 @@ export async function runQuery(prevState: any, formData: FormData) {
   const { question } = validatedFields.data;
 
   try {
-    // Mock BigQuery results based on the question
+    // In a real app, you would execute the generated SQL.
+    // For this POC, we use a simple mock based on keywords.
     const mockResults = getMockResults(question);
 
     const nlqResponse = await queryPlantDataWithNaturalLanguage({
@@ -55,6 +56,7 @@ export async function runQuery(prevState: any, formData: FormData) {
   }
 }
 
+// Simple mock data generator for demonstration purposes.
 function getMockResults(question: string): Record<string, any>[] {
     const lowerQuestion = question.toLowerCase();
     if (lowerQuestion.includes('yesterday')) {
@@ -66,7 +68,7 @@ function getMockResults(question: string): Record<string, any>[] {
     if (lowerQuestion.includes('shift')) {
         return [{ production_total_tons: 1720, clinker_quality_avg: 0.91, alerts_count: 3 }];
     }
-    return [{ result: "Sample data for the query.", value: Math.random() * 100 }];
+    return [{ result: "Sample data for your query.", value: Math.random() * 100 }];
 }
 
 
@@ -89,7 +91,6 @@ export async function runOptimization(prevState: any, formData: FormData) {
   const { constraints } = validatedFields.data;
 
   try {
-    // Using mock current state as per architecture
     const recommendation = await optimizeCementProduction({
         plantId: "poc_plant_01",
         kilnTemperature: 1455.2,
