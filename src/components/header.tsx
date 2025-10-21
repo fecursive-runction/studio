@@ -15,7 +15,6 @@ import { Factory, LogOut, PanelLeft, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import { MainNav } from './main-nav';
 import { useSidebar } from './ui/sidebar-v2';
-import { cn } from '@/lib/utils';
 
 export function AppHeader() {
   const { open, setOpen } = useSidebar();
@@ -36,9 +35,10 @@ export function AppHeader() {
             <Link
               href="/"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+              onClick={() => setOpen(false)}
             >
               <Factory className="h-5 w-5 transition-all group-hover:scale-110" />
-              <span className="sr-only">CementPlantAI</span>
+              <span className="sr-only">kiln.AI</span>
             </Link>
             <MainNav />
           </nav>

@@ -18,7 +18,7 @@ import { MainNav } from '@/components/main-nav';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'CementPlantAI',
+  title: 'kiln.AI',
   description: 'Autonomous Cement Plant GenAI Platform PoC',
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -40,41 +40,43 @@ export default function RootLayout({
         )}
       >
         <SidebarProvider>
-          <Sidebar>
-            <SidebarHeader>
-              <Link
-                href="/"
-                className="flex items-center gap-2"
-                aria-label="CementPlantAI Home"
-              >
-                <Factory className="h-6 w-6 text-primary" />
-                <span className="text-lg font-semibold tracking-tight">
-                  CementPlantAI
-                </span>
-              </Link>
-            </SidebarHeader>
-            <SidebarContent>
-              <MainNav />
-            </SidebarContent>
-            <SidebarFooter>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src="https://picsum.photos/seed/user/100/100" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">John Doe</span>
-                  <span className="text-xs text-muted-foreground">
-                    operator@example.com
+          <div className="flex">
+            <Sidebar>
+              <SidebarHeader>
+                <Link
+                  href="/"
+                  className="flex items-center gap-2"
+                  aria-label="kiln.AI Home"
+                >
+                  <Factory className="h-6 w-6 text-primary" />
+                  <span className="text-lg font-semibold tracking-tight">
+                    kiln.AI
                   </span>
+                </Link>
+              </SidebarHeader>
+              <SidebarContent>
+                <MainNav />
+              </SidebarContent>
+              <SidebarFooter>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src="https://picsum.photos/seed/user/100/100" />
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">John Doe</span>
+                    <span className="text-xs text-muted-foreground">
+                      operator@example.com
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </SidebarFooter>
-          </Sidebar>
-          <SidebarInset>
-            <AppHeader />
-            {children}
-          </SidebarInset>
+              </SidebarFooter>
+            </Sidebar>
+            <SidebarInset>
+              <AppHeader />
+              {children}
+            </SidebarInset>
+          </div>
         </SidebarProvider>
         <Toaster />
       </body>

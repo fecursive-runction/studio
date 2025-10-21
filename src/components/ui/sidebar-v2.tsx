@@ -7,43 +7,42 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
 const sidebarVariants = cva('flex flex-col h-full', {
   variants: {
     variant: {
-      default: 'bg-card text-card-foreground',
+      default: 'bg-sidebar text-sidebar-foreground',
       transparent: 'bg-transparent',
     },
     border: {
       default: '',
-      right: 'border-r',
-      left: 'border-l',
-      top: 'border-t',
-      bottom: 'border-b',
+      right: 'border-r border-sidebar-border',
+      left: 'border-l border-sidebar-border',
+      top: 'border-t border-sidebar-border',
+      bottom: 'border-b border-sidebar-border',
     }
   },
   defaultVariants: {
     variant: 'default',
+    border: 'right',
   }
 })
 
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof sidebarVariants> {
-  isCollapsed?: boolean
-}
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof sidebarVariants> {}
 
 
 const SidebarContext = React.createContext<{
   isCollapsed: boolean,
   open: boolean,
   setOpen: (open: boolean) => void,
+  toggleCollapsed: () => void,
 }>({
   isCollapsed: false,
   open: false,
-  setOpen: () => { }
+  setOpen: () => { },
+  toggleCollapsed: () => { },
 })
 
 
@@ -57,33 +56,26 @@ export function useSidebar() {
 
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = React.useState(false)
-  const [open, setOpen] = React.useState(true)
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [open, setOpen] = React.useState(false); // For mobile sheet
 
+  // Effect to handle window resize
   React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "b" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setIsCollapsed((isCollapsed) => !isCollapsed)
+    const handleResize = () => {
+      if (window.innerWidth >= 768) { // md breakpoint
+        setOpen(false); // Close mobile sheet on desktop
       }
-    }
-    document.addEventListener("keydown", down)
-    return () => document.removeEventListener("keydown", down)
-  }, [])
-
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const value = {
     isCollapsed,
     open,
-    setOpen: (val: boolean) => {
-      setOpen(val)
-      if (val) {
-        setIsCollapsed(false)
-      } else {
-        setIsCollapsed(true)
-      }
-    },
-  }
+    setOpen,
+    toggleCollapsed: () => setIsCollapsed(prev => !prev),
+  };
 
 
   return (
@@ -101,7 +93,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({
   border,
   ...props
 }, ref) => {
-  const { isCollapsed, setOpen } = useSidebar()
+  const { isCollapsed, toggleCollapsed } = useSidebar()
   return (
     <div
       ref={ref}
@@ -127,10 +119,10 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({
         size="icon"
         className={cn(
           'absolute -right-5 top-1/2 -translate-y-1/2 rounded-full z-10 hidden md:flex',
-          'transition-all duration-300 ease-in-out',
+          'transition-transform duration-300 ease-in-out',
           isCollapsed ? 'rotate-180' : 'rotate-0'
         )}
-        onClick={() => setOpen(!isCollapsed)}
+        onClick={toggleCollapsed}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -184,7 +176,7 @@ const SidebarFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     <div
       ref={ref}
       className={cn(
-        'p-4 mt-auto border-t',
+        'p-4 mt-auto border-t border-sidebar-border',
         isCollapsed ? 'p-2' : 'p-4',
         className
       )}
@@ -312,21 +304,6 @@ const SidebarInset = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   className,
   ...props
 }, ref) => {
-  const { setOpen } = useSidebar()
-
-  React.useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setOpen(false)
-      } else {
-        setOpen(true)
-      }
-    }
-    window.addEventListener('resize', handleResize)
-    handleResize()
-    return () => window.removeEventListener('resize', handleResize)
-  }, [setOpen])
-
   return (
     <div
       ref={ref}
