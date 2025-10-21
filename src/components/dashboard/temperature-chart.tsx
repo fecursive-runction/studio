@@ -19,10 +19,23 @@ type TemperatureChartProps = {
   data: { time: string; temperature: number }[];
 };
 
+const chartConfig = {
+  temperature: {
+    label: "Temperature",
+    color: "hsl(var(--primary))",
+  },
+};
+
 export function TemperatureChart({ data }: TemperatureChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={data}>
+    <ChartContainer config={chartConfig} className="h-[350px] w-full">
+      <LineChart
+        data={data}
+        margin={{
+          left: 12,
+          right: 12,
+        }}
+      >
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="time"
@@ -51,6 +64,6 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
           dot={false}
         />
       </LineChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }
