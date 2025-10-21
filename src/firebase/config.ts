@@ -1,8 +1,8 @@
 export const firebaseConfig = {
-  "projectId": "studio-9893974373-9a6e3",
-  "appId": "1:707613524675:web:0f0d10f63647bb76715876",
-  "apiKey": "AIzaSyCAIuOgEFwGNo4hgPXcvc0P26rih8U6wZU",
-  "authDomain": "studio-9893974373-9a6e3.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "707613524675"
+  "projectId": "kiln-ai-28281",
+  "appId": "1:453629474251:web:e41d8b635c9a7852c086d3",
+  "apiKey": "AIzaSyBlbEaWJjXJZAcoiV9RzM8-l2k3pEprXQY",
+  "authDomain": "kiln-ai-28281.firebaseapp.com",
+  "storageBucket": "kiln-ai-28281.appspot.com",
+  "messagingSenderId": "453629474251"
 };
