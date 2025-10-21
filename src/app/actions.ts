@@ -4,7 +4,7 @@ import { queryPlantDataWithNaturalLanguage } from '@/ai/flows/query-plant-data-w
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
-import { generate } from 'genkit/ai';
+import { generate } from 'genkit';
 
 const querySchema = z.object({
   question: z.string(),
@@ -46,7 +46,7 @@ export async function runQuery(prevState: any, formData: FormData) {
       model: ai.model,
       prompt: summaryPrompt,
     });
-    const summary = summaryResponse.text();
+    const summary = summaryResponse.text;
     
     return {
       error: null,

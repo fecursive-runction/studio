@@ -27,4 +27,39 @@ export async function queryPlantDataWithNaturalLanguage(input: QueryPlantDataWit
   return queryPlantDataWithNaturalLanguageFlow(input);
 }
 
-const schemaPrompt = `Available Tables:\n1. sensor_readings\nColumns: timestamp, plant_id, sensor_id, value\nDescription: Time-series sensor data\n2. production_metrics\nColumns: timestamp, plant_id, production_rate_tph,\nenergy_per_ton_kwh, clinker_quality_score\nDescription: Aggregated production KPIs\n3. raw_material_batches\nColumns: analysis_timestamp, plant_id, batch_id, composition\nDescription: Raw material chemical analysis\n4. ai_recommendations\nColumns: recommendation_id, timestamp, parameters,\npredicted_outcomes, implementation_status\nDescription: AI optimization recommendations\n\nGenerate a valid BigQuery SQL query for: "{{{question}}}\
+const schemaPrompt = `Available Tables:
+1. sensor_readings
+Columns: timestamp, plant_id, sensor_id, value
+Description: Time-series sensor data
+2. production_metrics
+Columns: timestamp, plant_id, production_rate_tph,
+energy_per_ton_kwh, clinker_quality_score
+Description: Aggregated production KPIs
+3. raw_material_batches
+Columns: analysis_timestamp, plant_id, batch_id, composition
+Description: Raw material chemical analysis
+4. ai_recommendations
+Columns: recommendation_id, timestamp, parameters,
+predicted_outcomes, implementation_status
+Description: AI optimization recommendations
+
+Generate a valid BigQuery SQL query for: "{{{question}}}"`;
+
+const queryPlantDataWithNaturalLanguageFlow = ai.defineFlow(
+    {
+      name: 'queryPlantDataWithNaturalLanguageFlow',
+      inputSchema: QueryPlantDataWithNaturalLanguageInputSchema,
+      outputSchema: QueryPlantDataWithNaturalLanguageOutputSchema,
+    },
+    async input => {
+        const { output } = await ai.generate({
+            prompt: schemaPrompt,
+            history: [{role: 'user', content: [{text: input.question}]}],
+            model: ai.model,
+            output: {
+                schema: QueryPlantDataWithNaturalLanguageOutputSchema
+            }
+        });
+      return output!;
+    }
+);
