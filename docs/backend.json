@@ -87,30 +87,35 @@
           "description": "The timestamp of the production metric.",
           "format": "date-time"
         },
-        "plantId": {
+        "plant_id": {
           "type": "string",
           "description": "Reference to Plant. (Relationship: Plant 1:N ProductionMetric)"
         },
-        "productionRateTph": {
+        "kiln_temp": {
           "type": "number",
-          "description": "Production rate in tons per hour."
+          "description": "Kiln temperature in Celsius"
         },
-        "energyPerTonKwh": {
+        "feed_rate": {
           "type": "number",
-          "description": "Energy consumption per ton of production in kilowatt-hours."
+          "description": "Raw material feed rate in tons per hour"
         },
-        "clinkerQualityScore": {
+        "energy_kwh_per_ton": {
           "type": "number",
-          "description": "Quality score of the produced clinker."
+          "description": "Energy consumption in kWh per ton"
+        },
+        "clinker_quality_score": {
+          "type": "number",
+          "description": "A score from 0-1"
         }
       },
       "required": [
         "id",
         "timestamp",
-        "plantId",
-        "productionRateTph",
-        "energyPerTonKwh",
-        "clinkerQualityScore"
+        "plant_id",
+        "kiln_temp",
+        "feed_rate",
+        "energy_kwh_per_ton",
+        "clinker_quality_score"
       ]
     },
     "AiRecommendation": {
@@ -305,119 +310,23 @@
   "firestore": {
     "structure": [
       {
-        "path": "/plants/{plantId}",
-        "definition": {
-          "entityName": "Plant",
-          "schema": {
-            "$ref": "#/backend/entities/Plant"
-          },
-          "description": "Stores plant-specific information.",
-          "params": [
-            {
-              "name": "plantId",
-              "description": "The unique identifier for the cement plant."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/plants/{plantId}/sensorReadings/{sensorReadingId}",
-        "definition": {
-          "entityName": "SensorReading",
-          "schema": {
-            "$ref": "#/backend/entities/SensorReading"
-          },
-          "description": "Stores sensor readings associated with a plant.",
-          "params": [
-            {
-              "name": "plantId",
-              "description": "The unique identifier for the cement plant."
-            },
-            {
-              "name": "sensorReadingId",
-              "description": "The unique identifier for the sensor reading."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId}",
-        "definition": {
-          "entityName": "RawMaterialBatch",
-          "schema": {
-            "$ref": "#/backend/entities/RawMaterialBatch"
-          },
-          "description": "Stores raw material batch information associated with a plant.",
-          "params": [
-            {
-              "name": "plantId",
-              "description": "The unique identifier for the cement plant."
-            },
-            {
-              "name": "rawMaterialBatchId",
-              "description": "The unique identifier for the raw material batch."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/plants/{plantId}/productionMetrics/{productionMetricId}",
+        "path": "/plant-metrics/live",
         "definition": {
           "entityName": "ProductionMetric",
           "schema": {
             "$ref": "#/backend/entities/ProductionMetric"
           },
-          "description": "Stores aggregated production metrics for a plant.",
-          "params": [
-            {
-              "name": "plantId",
-              "description": "The unique identifier for the cement plant."
-            },
-            {
-              "name": "productionMetricId",
-              "description": "The unique identifier for the production metric record."
-            }
-          ]
+          "description": "Stores the single, most recent live metric reading for the entire plant."
         }
       },
       {
-        "path": "/plants/{plantId}/aiRecommendations/{aiRecommendationId}",
+        "path": "/production_metrics/{metricId}",
         "definition": {
-          "entityName": "AiRecommendation",
+          "entityName": "ProductionMetric",
           "schema": {
-            "$ref": "#/backend/entities/AiRecommendation"
+            "$ref": "#/backend/entities/ProductionMetric"
           },
-          "description": "Stores AI-generated recommendations for a plant.",
-          "params": [
-            {
-              "name": "plantId",
-              "description": "The unique identifier for the cement plant."
-            },
-            {
-              "name": "aiRecommendationId",
-              "description": "The unique identifier for the AI recommendation."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/plants/{plantId}/alerts/{alertId}",
-        "definition": {
-          "entityName": "Alert",
-          "schema": {
-            "$ref": "#/backend/entities/Alert"
-          },
-          "description": "Stores alerts generated for a plant.",
-          "params": [
-            {
-              "name": "plantId",
-              "description": "The unique identifier for the cement plant."
-            },
-            {
-              "name": "alertId",
-              "description": "The unique identifier for the alert."
-            }
-          ]
+          "description": "Stores historical production metrics. Each document is a snapshot in time."
         }
       },
       {
@@ -427,7 +336,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. Includes denormalized 'plantIds' array for authorization independence.",
+          "description": "Stores user profiles.",
           "params": [
             {
               "name": "userId",
@@ -436,7 +345,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore data structure is designed to support the Autonomous Cement Plant GenAI Platform PoC, prioritizing real-time data access and AI-driven optimization. Key considerations include:\n\n1.  **Authorization Independence:** The structure avoids hierarchical authorization dependencies, eliminating `get()` calls in security rules by denormalizing authorization data where needed. This is especially relevant for the User-Plant relationship.  We store `plantIds` on the `User` document enabling rules to validate the user's access to relevant Plant-scoped data.\n\n2.  **Structural Segregation:**  Data with differing access requirements are stored in separate collections, simplifying security rule design.\n\n3.  **Access Modeling:** Path-based ownership is used for user-specific data (`/users/{userId}`) while plant-scoped data is organized under `/plants/{plantId}`.  This enforces clear ownership semantics.\n\n4.  **QAPs:** The data structure is designed to support secure list operations.  Specifically, alerts are scoped to a plant via the `plantId` field, enabling list operations filtered by `plantId`.\n\nExplanation of Paths:\n\n*   `/plants/{plantId}`: Stores plant-specific information. Most data is scoped to a plant. The root-level `plants` collection enables listing all plants, useful for administrative interfaces.\n*   `/plants/{plantId}/sensorReadings/{sensorReadingId}`: Stores sensor readings associated with a plant.\n*   `/plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId}`: Stores raw material batch information associated with a plant.\n*   `/plants/{plantId}/productionMetrics/{productionMetricId}`: Stores aggregated production metrics for a plant.\n*   `/plants/{plantId}/aiRecommendations/{aiRecommendationId}`: Stores AI-generated recommendations for a plant.\n*   `/plants/{plantId}/alerts/{alertId}`: Stores alerts generated for a plant.\n*   `/users/{userId}`: Stores user profiles. The `plantIds` array contains the IDs of the plants that the user is authorized to access. This denormalization is crucial for authorization independence, allowing security rules to determine a user's plant access without needing to `get()` the plant document.\n"
+    ]
   }
 }

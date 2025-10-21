@@ -1,35 +1,66 @@
 import { NextResponse } from 'next/server';
 import { BigQuery } from '@google-cloud/bigquery';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
+// Initialize Firebase Admin SDK
+if (!getApps().length) {
+    if (process.env.GCP_PROJECT) {
+        initializeApp();
+    } else {
+        try {
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY!);
+            initializeApp({ credential: cert(serviceAccount) });
+        } catch (e) {
+            console.error('Error initializing Firebase Admin SDK locally. Make sure FIREBASE_SERVICE_ACCOUNT_KEY is set in your .env.local file.');
+        }
+    }
+}
+const db = getFirestore();
 
 const bigquery = new BigQuery();
 const datasetId = 'cement_plant_poc';
-const tableId = 'production_metrics';
+const bqTableId = 'production_metrics';
+const firestoreCollectionId = 'production_metrics';
 
-// This is a simplified stream processor. In a real app, you'd use Firestore as well.
+
 async function insertIntoBigQuery(data: any) {
+  // Remove trend data before inserting into historical log
+  const { kiln_temp_trend, feed_rate_trend, energy_kwh_trend, quality_score_trend, ...historicalData } = data;
+  
   const rows = [{
-    timestamp: data.timestamp,
-    plant_id: data.plant_id,
-    kiln_temp: data.kiln_temp,
-    feed_rate: data.feed_rate,
-    energy_kwh_per_ton: data.energy_kwh_per_ton,
-    clinker_quality_score: data.clinker_quality_score,
+    timestamp: historicalData.timestamp,
+    plant_id: historicalData.plant_id,
+    kiln_temp: historicalData.kiln_temp,
+    feed_rate: historicalData.feed_rate,
+    energy_kwh_per_ton: historicalData.energy_kwh_per_ton,
+    clinker_quality_score: historicalData.clinker_quality_score,
   }];
 
   try {
-    await bigquery.dataset(datasetId).table(tableId).insert(rows);
+    await bigquery.dataset(datasetId).table(bqTableId).insert(rows);
     console.log(`Inserted ${rows.length} rows into BigQuery`);
   } catch (error: any) {
     console.error('BIGQUERY ERROR:', JSON.stringify(error, null, 2));
-    // In a real app, you might want to send failed messages to a dead-letter queue
   }
+}
+
+async function insertIntoFirestore(data: any) {
+    // Remove trend data before inserting into historical log
+    const { kiln_temp_trend, feed_rate_trend, energy_kwh_trend, quality_score_trend, ...historicalData } = data;
+
+    try {
+      await db.collection(firestoreCollectionId).add(historicalData);
+      console.log(`Inserted document into Firestore collection '${firestoreCollectionId}'`);
+    } catch (error) {
+      console.error('FIRESTORE ERROR:', error);
+    }
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Pub/Sub messages are base64-encoded
     const message = body.message;
     if (!message || !message.data) {
         console.error('Invalid Pub/Sub message format');
@@ -41,18 +72,17 @@ export async function POST(req: Request) {
 
     console.log('Received data:', sensorData);
 
-    // Insert data into BigQuery
-    await insertIntoBigQuery(sensorData);
-    
-    // Here is where you would also update Firestore with live data
-    // For now, we are just logging it.
+    // Insert data into BigQuery and Firestore
+    await Promise.all([
+        insertIntoBigQuery(sensorData),
+        insertIntoFirestore(sensorData)
+    ]);
 
     // Acknowledge the message
     return new Response('OK', { status: 204 });
 
   } catch (error: any) {
     console.error('Error processing message:', error.message);
-    // Return a 500 status to indicate failure, which can cause Pub/Sub to retry
     return new Response('Internal Server Error', { status: 500 });
   }
 }
