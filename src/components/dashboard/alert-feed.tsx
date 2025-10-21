@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -41,6 +42,12 @@ const severityIconStyles = {
   };
 
 export function AlertFeed({ alerts }: { alerts: Alert[] }) {
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <Card>
       <CardHeader>
@@ -72,7 +79,7 @@ export function AlertFeed({ alerts }: { alerts: Alert[] }) {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {alert.timestamp.toLocaleTimeString()}
+                    {isClient ? alert.timestamp.toLocaleTimeString() : ''}
                   </p>
                 </div>
               </div>
