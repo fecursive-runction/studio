@@ -1,0 +1,159 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a role-based access control model for a cement plant management system.
+ *
+ * Core Philosophy:
+ * The security model centers around users and plants. Users have specific roles and are associated with one or more plants.
+ * Access to plant-related data (sensor readings, raw material batches, etc.) is controlled based on the user's association with the plant.
+ * User documents are secured using owner-only access.
+ *
+ * Data Structure:
+ * - /plants/{plantId}: Stores plant information.
+ * - /plants/{plantId}/sensorReadings/{sensorReadingId}: Stores sensor readings for a specific plant.
+ * - /plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId}: Stores raw material batch data for a specific plant.
+ * - /plants/{plantId}/productionMetrics/{productionMetricId}: Stores production metrics for a specific plant.
+ * - /plants/{plantId}/aiRecommendations/{aiRecommendationId}: Stores AI recommendations for a specific plant.
+ * - /plants/{plantId}/alerts/{alertId}: Stores alerts for a specific plant.
+ * - /users/{userId}: Stores user information, including a `plantIds` array indicating which plants the user has access to.
+ *
+ * Key Security Decisions:
+ * - User listing is denied.
+ * - User creation is restricted to authenticated users creating their own profile.
+ * - Plant-scoped data access is determined by checking if the user's `plantIds` array contains the plant ID. This denormalization avoids costly `get()` calls.
+ * - The rules prioritize authorization and relational integrity checks. Data shape validation is relaxed for prototyping.
+ *
+ * Denormalization for Authorization:
+ * - The `User` document includes a `plantIds` array. This allows checking a user's access to a plant without needing to read the Plant document itself. This is crucial for performance and scalability.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows reading any plant document. Write operations are denied.
+     * @path /plants/{plantId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
+     */
+    match /plants/{plantId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows reading sensor readings associated with a plant for authorized users. Write operations are denied.
+     * @path /plants/{plantId}/sensorReadings/{sensorReadingId}
+     * @allow get, list: if isAuthorizedForPlant(plantId);
+     * @deny create, update, delete: if false;
+     * @principle Plant-scoped data access controlled by user's plantIds.
+     */
+    match /plants/{plantId}/sensorReadings/{sensorReadingId} {
+      allow get, list: if isAuthorizedForPlant(plantId);
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows reading raw material batch information for authorized users. Write operations are denied.
+     * @path /plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId}
+     * @allow get, list: if isAuthorizedForPlant(plantId);
+     * @deny create, update, delete: if false;
+     * @principle Plant-scoped data access controlled by user's plantIds.
+     */
+    match /plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId} {
+      allow get, list: if isAuthorizedForPlant(plantId);
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows reading production metrics for authorized users. Write operations are denied.
+     * @path /plants/{plantId}/productionMetrics/{productionMetricId}
+     * @allow get, list: if isAuthorizedForPlant(plantId);
+     * @deny create, update, delete: if false;
+     * @principle Plant-scoped data access controlled by user's plantIds.
+     */
+    match /plants/{plantId}/productionMetrics/{productionMetricId} {
+      allow get, list: if isAuthorizedForPlant(plantId);
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows reading AI recommendations for authorized users. Write operations are denied.
+     * @path /plants/{plantId}/aiRecommendations/{aiRecommendationId}
+     * @allow get, list: if isAuthorizedForPlant(plantId);
+     * @deny create, update, delete: if false;
+     * @principle Plant-scoped data access controlled by user's plantIds.
+     */
+    match /plants/{plantId}/aiRecommendations/{aiRecommendationId} {
+      allow get, list: if isAuthorizedForPlant(plantId);
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows reading alerts for authorized users. Write operations are denied.
+     * @path /plants/{plantId}/alerts/{alertId}
+     * @allow get, list: if isAuthorizedForPlant(plantId);
+     * @deny create, update, delete: if false;
+     * @principle Plant-scoped data access controlled by user's plantIds.
+     */
+    match /plants/{plantId}/alerts/{alertId} {
+      allow get, list: if isAuthorizedForPlant(plantId);
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows a user to create, read, update, and delete their own user document.
+     * @path /users/{userId}
+     * @allow create: if isSignedIn() && request.auth.uid == userId;
+     * @allow get: if isOwner(userId);
+     * @allow list: if false;
+     * @allow update: if isExistingOwner(userId);
+     * @allow delete: if isExistingOwner(userId);
+     * @principle Enforces document ownership for all operations on the user document.
+     */
+    match /users/{userId} {
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    // ---- Helper functions ----
+
+    /**
+     * @description Checks if the user is signed in.
+     * @return {bool} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the requesting user is the owner of the document, using request.auth.uid
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+     /**
+      * @description Checks if the requesting user is the owner of an EXISTING document.
+      * @param {string} userId The user ID to check against.
+      * @return {bool} True if the user is the owner and resource exists, false otherwise.
+      */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the user is authorized to access data for a specific plant.
+     * @param {string} plantId The plant ID to check against.
+     * @return {bool} True if the user is authorized, false otherwise.
+     */
+    function isAuthorizedForPlant(plantId) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plantIds.hasAny([plantId]);
+    }
+  }
+}
