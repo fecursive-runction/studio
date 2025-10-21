@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useFormStatus, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { useFormStatus } from 'react-dom';
 import { runOptimization } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -40,7 +41,9 @@ function SubmitButton() {
   );
 }
 
-function Status({ state, pending }: { state: typeof initialState, pending: boolean }) {
+function Status({ state }: { state: typeof initialState }) {
+    const { pending } = useFormStatus();
+
     if (pending) {
         return (
             <div className="space-y-6">
@@ -111,7 +114,6 @@ export function OptimizationPanel() {
   const [state, formAction] = useActionState(runOptimization, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
-  const { pending } = useFormStatus();
 
   useEffect(() => {
     if (state.error) {
@@ -160,7 +162,7 @@ export function OptimizationPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <Status state={state} pending={pending} />
+            <Status state={state} />
         </CardContent>
       </Card>
     </div>
