@@ -9,23 +9,15 @@ import { Button, type ButtonProps } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ChevronLeft } from 'lucide-react'
 
-const sidebarVariants = cva('flex flex-col h-full', {
+const sidebarVariants = cva('flex flex-col', {
   variants: {
     variant: {
-      default: 'bg-sidebar text-sidebar-foreground',
+      default: 'bg-card text-card-foreground',
       transparent: 'bg-transparent',
     },
-    border: {
-      default: '',
-      right: 'border-r border-sidebar-border',
-      left: 'border-l border-sidebar-border',
-      top: 'border-t border-sidebar-border',
-      bottom: 'border-b border-sidebar-border',
-    }
   },
   defaultVariants: {
     variant: 'default',
-    border: 'right',
   }
 })
 
@@ -56,17 +48,11 @@ export function useSidebar() {
 
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [open, setOpen] = React.useState(false); // For mobile sheet
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const [isCollapsed, setIsCollapsed] = React.useState(false)
+  const [open, setOpen] = React.useState(false)
 
   // Effect to handle window resize
   React.useEffect(() => {
-    if (!isMounted) return;
     const handleResize = () => {
       if (window.innerWidth >= 768) { // md breakpoint
         setOpen(false); // Close mobile sheet on desktop
@@ -74,23 +60,14 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isMounted]);
+  }, []);
+
 
   const value = {
     isCollapsed,
     open,
     setOpen,
     toggleCollapsed: () => setIsCollapsed(prev => !prev),
-  };
-
-  if (!isMounted) {
-    return (
-        <SidebarContext.Provider value={value}>
-            <TooltipProvider>
-                {children}
-            </TooltipProvider>
-        </SidebarContext.Provider>
-    )
   }
 
   return (
@@ -105,7 +82,6 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({
   className,
   variant,
-  border,
   ...props
 }, ref) => {
   const { isCollapsed, toggleCollapsed } = useSidebar()
@@ -121,8 +97,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({
     >
       <div
         className={cn(
-          sidebarVariants({ variant, border }),
-          "fixed h-full",
+          sidebarVariants({ variant }),
+          "fixed h-full border-r",
           isCollapsed ? 'w-14' : 'w-64',
           'transition-all duration-300 ease-in-out',
           className
@@ -191,7 +167,7 @@ const SidebarFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     <div
       ref={ref}
       className={cn(
-        'p-4 mt-auto border-t border-sidebar-border',
+        'p-4 mt-auto border-t',
         isCollapsed ? 'p-2' : 'p-4',
         className
       )}

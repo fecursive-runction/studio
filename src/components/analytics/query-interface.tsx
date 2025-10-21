@@ -48,96 +48,6 @@ function SubmitButton() {
   );
 }
 
-function Status({ state }: { state: typeof initialState }) {
-    const { pending } = useFormStatus();
-
-    return (
-        <div className="space-y-8">
-            <div className="grid gap-8 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Code className="h-5 w-5 text-muted-foreground" />
-                            Generated SQL
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {pending ? (
-                            <div className="space-y-2">
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-5/6" />
-                            </div>
-                        ) : state.sql ? (
-                            <pre className="mt-2 w-full overflow-x-auto rounded-md bg-muted p-4 text-sm">
-                                <code>{state.sql}</code>
-                            </pre>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">SQL will appear here...</p>
-                        )}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Lightbulb className="h-5 w-5 text-muted-foreground" />
-                            AI Summary
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {pending ? (
-                            <div className="space-y-2">
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-2/3" />
-                            </div>
-                        ) : state.summary ? (
-                            <p className="text-sm">{state.summary}</p>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Summary will appear here...</p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <TableIcon className="h-5 w-5 text-muted-foreground" />
-                        Query Results
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {pending ? (
-                        <div className="space-y-2">
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                    ) : state.results && Array.isArray(state.results) && state.results.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    {Object.keys(state.results[0]).map((key) => <TableHead key={key}>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</TableHead>)}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {state.results.map((row, i) => (
-                                    <TableRow key={i}>
-                                        {Object.values(row).map((value, j) => (
-                                            <TableCell key={j}>{typeof value === 'number' ? value.toFixed(2) : String(value)}</TableCell>
-                                        ))}
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">Results will appear here...</p>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-    )
-}
-
 export function QueryInterface() {
   const [state, formAction] = useActionState(runQuery, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -180,7 +90,73 @@ export function QueryInterface() {
             </Card>
 
             <div className="mt-8">
-                <Status state={state} />
+                <div className="space-y-8">
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Code className="h-5 w-5 text-muted-foreground" />
+                                    Generated SQL
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {state.sql ? (
+                                    <pre className="mt-2 w-full overflow-x-auto rounded-md bg-muted p-4 text-sm">
+                                        <code>{state.sql}</code>
+                                    </pre>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">SQL will appear here...</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Lightbulb className="h-5 w-5 text-muted-foreground" />
+                                    AI Summary
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {state.summary ? (
+                                    <p className="text-sm">{state.summary}</p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">Summary will appear here...</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <TableIcon className="h-5 w-5 text-muted-foreground" />
+                                Query Results
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {state.results && Array.isArray(state.results) && state.results.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            {Object.keys(state.results[0]).map((key) => <TableHead key={key}>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</TableHead>)}
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {state.results.map((row, i) => (
+                                            <TableRow key={i}>
+                                                {Object.values(row).map((value, j) => (
+                                                    <TableCell key={j}>{typeof value === 'number' ? value.toFixed(2) : String(value)}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Results will appear here...</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </form>
     </div>
