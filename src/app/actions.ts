@@ -2,6 +2,7 @@
 
 import { queryPlantDataWithNaturalLanguage } from '@/ai/flows/query-plant-data-with-natural-language';
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
+import { executeBigQuery } from '@/services/bigquery';
 import { z } from 'zod';
 
 const querySchema = z.object({
@@ -25,21 +26,33 @@ export async function runQuery(prevState: any, formData: FormData) {
   const { question } = validatedFields.data;
 
   try {
-    // In a real app, you would execute the generated SQL.
-    // For this POC, we use a simple mock based on keywords.
-    const mockResults = getMockResults(question);
-
-    const nlqResponse = await queryPlantDataWithNaturalLanguage({
+    // Step 1: Generate SQL from the natural language question.
+    const sqlResponse = await queryPlantDataWithNaturalLanguage({
       question,
       plantId: 'poc_plant_01',
-      results: mockResults,
+      state: 'generate_sql'
+    });
+
+    if (!sqlResponse.sql) {
+        throw new Error('AI failed to generate SQL query.');
+    }
+
+    // Step 2: Execute the generated SQL against BigQuery.
+    const results = await executeBigQuery(sqlResponse.sql);
+
+    // Step 3: Pass the real results back to the AI to get a summary.
+    const summaryResponse = await queryPlantDataWithNaturalLanguage({
+        question,
+        plantId: 'poc_plant_01',
+        state: 'summarize_results',
+        results,
     });
     
     return {
       error: null,
-      sql: nlqResponse.sql,
-      results: mockResults,
-      summary: nlqResponse.summary,
+      sql: sqlResponse.sql,
+      results: results,
+      summary: summaryResponse.summary,
     };
 
   } catch (e: any) {
@@ -52,21 +65,6 @@ export async function runQuery(prevState: any, formData: FormData) {
       summary: null,
     };
   }
-}
-
-// Simple mock data generator for demonstration purposes.
-function getMockResults(question: string): Record<string, any>[] {
-    const lowerQuestion = question.toLowerCase();
-    if (lowerQuestion.includes('yesterday')) {
-        return [{ avg_temp: 1452.3, avg_feed_rate: 215.7, avg_quality_score: 0.92 }];
-    }
-    if (lowerQuestion.includes('last hour')) {
-        return [{ avg_temp: 1461.8, max_energy_kwh: 105.2 }];
-    }
-    if (lowerQuestion.includes('shift')) {
-        return [{ production_total_tons: 1720, clinker_quality_avg: 0.91, alerts_count: 3 }];
-    }
-    return [{ result: "Sample data for your query.", value: Math.random() * 100 }];
 }
 
 

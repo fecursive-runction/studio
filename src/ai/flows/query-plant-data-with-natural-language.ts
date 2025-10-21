@@ -13,14 +13,14 @@ import {z} from 'genkit';
 const QueryPlantDataWithNaturalLanguageInputSchema = z.object({
   question: z.string().describe('The natural language question about plant data.'),
   plantId: z.string().describe('The ID of the plant to query.'),
-  // We'll pass mock results for now, this would be replaced with a tool
-  results: z.array(z.record(z.any())).describe('The results from executing the generated SQL query.'),
+  state: z.enum(['generate_sql', 'summarize_results']).describe("The current stage of the process: 'generate_sql' to create the query, 'summarize_results' to interpret results."),
+  results: z.array(z.record(z.any())).optional().describe('The results from executing the generated SQL query. Only provided when state is "summarize_results".'),
 });
 export type QueryPlantDataWithNaturalLanguageInput = z.infer<typeof QueryPlantDataWithNaturalLanguageInputSchema>;
 
 const QueryPlantDataWithNaturalLanguageOutputSchema = z.object({
-  sql: z.string().describe('The generated BigQuery SQL query. Must be valid and executable.'),
-  summary: z.string().describe('A concise, natural language summary of the query results.'),
+  sql: z.string().optional().describe('The generated BigQuery SQL query. Only returned when state is "generate_sql".'),
+  summary: z.string().optional().describe('A concise, natural language summary of the query results. Only returned when state is "summarize_results".'),
 });
 export type QueryPlantDataWithNaturalLanguageOutput = z.infer<typeof QueryPlantDataWithNaturalLanguageOutputSchema>;
 
@@ -33,33 +33,39 @@ const prompt = ai.definePrompt({
     name: 'queryPlantDataPrompt',
     input: {schema: QueryPlantDataWithNaturalLanguageInputSchema},
     output: {schema: QueryPlantDataWithNaturalLanguageOutputSchema},
-    prompt: `You are an expert in translating natural language questions into SQL queries for a cement plant database.
-  
-    Given the user's question, you must generate a valid BigQuery SQL query to answer it.
-  
-    The primary table is 'production_metrics' with the following schema:
+    prompt: `You are an expert AI assistant that translates natural language questions into BigQuery SQL and summarizes query results for a cement plant.
+
+    The primary table is 'production_metrics' with the schema:
     - timestamp: TIMESTAMP
     - plant_id: STRING
     - kiln_temp: FLOAT
     - feed_rate: FLOAT
     - energy_kwh_per_ton: FLOAT
     - clinker_quality_score: FLOAT
-  
-    Guidelines:
-    1.  Always filter by the provided plant_id: '{{{plantId}}}'.
-    2.  The current timestamp can be retrieved using CURRENT_TIMESTAMP().
-    3.  When asked about "yesterday", use a date range from the beginning to the end of the previous day.
-    4.  After generating the SQL, you will be provided with the results of that query.
-    5.  Based on the provided results, generate a concise, easy-to-understand summary.
-  
+
+    Current State: '{{{state}}}'
+    Plant ID: '{{{plantId}}}'
     Question: {{{question}}}
-    
+
+    {{#if (eq state 'generate_sql')}}
+    Your task is to generate a valid BigQuery SQL query to answer the question.
+    - ALWAYS filter by the provided plant_id.
+    - Use CURRENT_TIMESTAMP() for the current time.
+    - When asked about "yesterday", use a date range for the previous day.
+    - Output a JSON object containing only the generated 'sql' query.
+    {{/if}}
+
+    {{#if (eq state 'summarize_results')}}
+    You have been provided with the results from executing the SQL query.
     Query Results:
     \`\`\`json
     {{{json results}}}
     \`\`\`
-  
-    Your task is to output a JSON object containing the generated 'sql' query and a 'summary' of the provided results.
+    Your task is to analyze these results and provide a concise, easy-to-understand natural language summary.
+    - Address the original question directly in your summary.
+    - If the results are empty, state that no data was found for the given criteria.
+    - Output a JSON object containing only the 'summary'.
+    {{/if}}
     `,
   });
   
@@ -70,9 +76,6 @@ const prompt = ai.definePrompt({
       outputSchema: QueryPlantDataWithNaturalLanguageOutputSchema,
     },
     async input => {
-      // In a real scenario, you would first generate SQL, then execute it against BigQuery.
-      // For this POC, we are generating the SQL and using mock execution results
-      // passed directly into the prompt to get a summary.
       const {output} = await prompt(input);
       return output!;
     }
