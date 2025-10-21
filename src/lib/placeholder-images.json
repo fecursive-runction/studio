@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "inspection-image",
+      "description": "A close-up photo of cement clinker for quality inspection.",
+      "imageUrl": "https://images.unsplash.com/photo-1543304376-8f16c218aee5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjZW1lbnQlMjBmYWN0b3J5fGVufDB8fHx8MTc2MTA3NjUxMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cement factory"
+    }
+  ]
 }
