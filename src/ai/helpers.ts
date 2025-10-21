@@ -1,5 +1,5 @@
 'use server';
-import { Handlebars } from 'genkit/tools';
+import { Handlebars } from 'genkit';
 
 let helpersRegistered = false;
 
