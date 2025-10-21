@@ -1,21 +1,31 @@
+
 'use client';
 
 import {
-  signInWithRedirect,
-  GoogleAuthProvider,
   signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { initializeFirebase } from '@/firebase';
 
 const { auth } = initializeFirebase();
-const provider = new GoogleAuthProvider();
 
-export function handleGoogleSignIn() {
-  // Using signInWithRedirect instead of signInWithPopup
-  // The user will be redirected to Google's sign-in page.
-  // After sign-in, they will be redirected back, and the onAuthStateChanged
-  // listener in FirebaseProvider will handle the authentication result.
-  signInWithRedirect(auth, provider);
+export async function handleEmailPasswordSignUp(email: string, password: string) {
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        console.error('Error signing up:', error);
+        throw error;
+    }
+}
+
+export async function handleEmailPasswordSignIn(email: string, password: string) {
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        console.error('Error signing in:', error);
+        throw error;
+    }
 }
 
 export async function handleLogout() {

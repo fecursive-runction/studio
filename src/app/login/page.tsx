@@ -1,8 +1,8 @@
+
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -12,12 +12,14 @@ import {
 } from '@/components/ui/card';
 import { Factory } from 'lucide-react';
 import { useUser } from '@/firebase';
-import { handleGoogleSignIn } from '@/firebase/auth/auth-service';
-import { FcGoogle } from 'react-icons/fc';
+import { LoginForm } from '@/components/auth/login-form';
+import { SignupForm } from '@/components/auth/signup-form';
+import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [isLoginView, setIsLoginView] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -44,18 +46,23 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl">Welcome to kiln.AI</CardTitle>
           <CardDescription>
-            Sign in to access your plant dashboard.
+            {isLoginView
+              ? 'Sign in to access your plant dashboard.'
+              : 'Create an account to get started.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignIn}
-          >
-            <FcGoogle className="mr-2 h-5 w-5" />
-            Sign in with Google
-          </Button>
+          {isLoginView ? <LoginForm /> : <SignupForm />}
+          <div className="mt-4 text-center text-sm">
+            {isLoginView ? "Don't have an account?" : 'Already have an account?'}
+            <Button
+              variant="link"
+              className="pl-1"
+              onClick={() => setIsLoginView(!isLoginView)}
+            >
+              {isLoginView ? 'Sign Up' : 'Sign In'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
