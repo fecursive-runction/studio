@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { AppHeader } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -29,6 +30,7 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
+        <FirebaseErrorListener />
         <FirebaseClientProvider>
           <div className="flex min-h-screen w-full flex-col">
             <AppHeader />
