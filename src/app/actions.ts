@@ -49,6 +49,17 @@ export async function getLiveMetrics() {
     }
 }
 
+export async function getMetricsHistory() {
+    try {
+        const db = await getDb();
+        const history = await db.all('SELECT * FROM production_metrics ORDER BY timestamp DESC');
+        return history;
+    } catch (e: any) {
+        console.error("Failed to get metrics history from SQLite:", e);
+        return [];
+    }
+}
+
 
 const optimizationSchema = z.object({
   constraints: z.string().optional(),

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Bot,
+  History,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -28,6 +29,11 @@ export function MainNav({ isMobile = false }: { isMobile?: boolean }) {
       label: 'Optimization',
       icon: Bot,
     },
+    {
+        href: '/history',
+        label: 'History',
+        icon: History,
+    }
   ];
 
   if (isMobile) {

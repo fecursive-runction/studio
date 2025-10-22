@@ -43,9 +43,8 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Set up the interval to trigger data ingestion and fetching
+  // Set up the interval to trigger data ingestion (but not fetching)
   useEffect(() => {
-    // Function to ingest new data
     const ingestData = async () => {
       try {
         await fetch('/api/ingest', { method: 'POST' });
@@ -53,47 +52,32 @@ export default function DashboardPage() {
         console.error("Failed to ingest data:", e);
       }
     };
+    const interval = setInterval(ingestData, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Function to fetch the latest data for the UI
+
+  // Fetch data once on component mount
+  useEffect(() => {
     const fetchAndSetData = async () => {
+        setLoading(true);
         try {
             const data = await getLiveMetrics();
             if (data) {
                 setMetricsData(data);
-                // Only fetch alerts if we have data to analyze
                 const aiAlerts = await getAiAlerts();
                 if (aiAlerts) {
                     setAlerts(aiAlerts);
                 }
             }
-
         } catch(e) {
             console.error("Failed to fetch metrics or alerts", e);
         } finally {
-            if (loading) {
-                setLoading(false);
-            }
+            setLoading(false);
         }
     };
-
-    // Run both immediately on mount
-    const initialLoad = async () => {
-        await ingestData();
-        await fetchAndSetData();
-    }
-    initialLoad();
-
-    // Then run them on an interval
-    const interval = setInterval(() => {
-        ingestData();
-        fetchAndSetData();
-    }, 5000); // every 5 seconds
-
-    // Clean up interval on component unmount
-    return () => {
-      clearInterval(interval);
-    };
-  }, []); // Only run on mount
+    fetchAndSetData();
+  }, []);
 
 
   const chartData = historicalTemperatureData;
