@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -16,27 +17,45 @@ import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-import { useDocument } from 'react-firebase-hooks/firestore';
-import { doc, getFirestore } from 'firebase/firestore';
-import { app } from '@/firebase/client';
 
 export default function DashboardPage() {
-  const [liveMetrics, loading, error] = useDocument(doc(getFirestore(app), 'plant-metrics', 'live'));
+  const [metricsData, setMetricsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Periodically call the ingest endpoint to simulate live data
   useEffect(() => {
-    const interval = setInterval(() => {
+    // Function to fetch live metrics from our new API route
+    const fetchLiveMetrics = async () => {
+      try {
+        const response = await fetch('/api/metrics/live');
+        if (response.ok) {
+          const data = await response.json();
+          setMetricsData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch live metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Periodically call the ingest endpoint to simulate live data
+    const dataIngestInterval = setInterval(() => {
       fetch('/api/ingest', { method: 'POST' });
     }, 5000); // every 5 seconds
 
-    // Initial fetch
+    // Periodically fetch the latest data
+    const dataFetchInterval = setInterval(fetchLiveMetrics, 5000);
+
+    // Initial fetches
     fetch('/api/ingest', { method: 'POST' });
+    fetchLiveMetrics();
 
-    return () => clearInterval(interval);
+    // Clean up intervals on component unmount
+    return () => {
+      clearInterval(dataIngestInterval);
+      clearInterval(dataFetchInterval);
+    };
   }, []);
-
-
-  const metricsData = liveMetrics?.data();
 
   const chartData = historicalTemperatureData.map((d, i) => i % 36 === 0 ? d : ({...d, time: ''}));
 
