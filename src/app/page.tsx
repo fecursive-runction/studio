@@ -10,6 +10,10 @@ import { MetricCard } from '@/components/dashboard/metric-card';
 import {
   LineChart,
   FlaskConical,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
@@ -27,6 +31,10 @@ type MetricsData = {
     sio2: number;
     al2o3: number;
     fe2o3: number;
+    c3s: number;
+    c2s: number;
+    c3a: number;
+    c4af: number;
 };
 
 type Alert = {
@@ -75,7 +83,7 @@ export default function DashboardPage() {
                     getAiAlerts(),
                     getMetricsHistory(),
                 ]);
-                if (data) setMetricsData(data);
+                if (data) setMetricsData(data as MetricsData);
                 if (aiAlerts) setAlerts(aiAlerts as Alert[]);
                 if (history) {
                     const transformedChartData = history
@@ -94,7 +102,7 @@ export default function DashboardPage() {
                 ]);
 
                 if (data) {
-                    setMetricsData(data);
+                    setMetricsData(data as MetricsData);
                     // Append the new data point to the chart
                     setChartData(prevData => {
                         const newDataPoint = {
@@ -196,6 +204,47 @@ export default function DashboardPage() {
             <AlertFeed alerts={alerts} liveMetrics={metricsData} />
           </div>
         </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Clinker Phases (Bogue)</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {loading || !metricsData ? (
+              Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)
+          ) : (
+            <>
+                <MetricCard
+                    title="C₃S (Alite)"
+                    value={(metricsData.c3s || 0).toFixed(1)}
+                    unit="%"
+                    icon="Component"
+                    description="Early strength"
+                />
+                <MetricCard
+                    title="C₂S (Belite)"
+                    value={(metricsData.c2s || 0).toFixed(1)}
+                    unit="%"
+                    icon="Component"
+                    description="Late strength"
+                />
+                <MetricCard
+                    title="C₃A (Aluminate)"
+                    value={(metricsData.c3a || 0).toFixed(1)}
+                    unit="%"
+                    icon="Component"
+                    description="Flash set/Heat"
+                />
+                <MetricCard
+                    title="C₄AF (Ferrite)"
+                    value={(metricsData.c4af || 0).toFixed(1)}
+                    unit="%"
+                    icon="Component"
+                    description="Reduces heat"
+                />
+            </>
+            )}
+            </CardContent>
+        </Card>
       </main>
   );
 }

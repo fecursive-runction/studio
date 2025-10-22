@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -54,5 +55,3 @@ export function MetricCard({
     </Card>
   );
 }
-
-    

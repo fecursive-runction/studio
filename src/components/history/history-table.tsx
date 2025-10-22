@@ -32,6 +32,10 @@ type Metric = {
     sio2: number;
     al2o3: number;
     fe2o3: number;
+    c3s: number;
+    c2s: number;
+    c3a: number;
+    c4af: number;
 };
 
 
@@ -43,7 +47,7 @@ export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
     setIsClient(true);
     const interval = setInterval(async () => {
         const newMetrics = await getMetricsHistory();
-        setMetrics(newMetrics);
+        setMetrics(newMetrics as Metric[]);
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
@@ -77,6 +81,10 @@ export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
                 <TableHead>SiO₂</TableHead>
                 <TableHead>Al₂O₃</TableHead>
                 <TableHead>Fe₂O₃</TableHead>
+                <TableHead>C₃S</TableHead>
+                <TableHead>C₂S</TableHead>
+                <TableHead>C₃A</TableHead>
+                <TableHead>C₄AF</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -107,6 +115,18 @@ export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
                   </TableCell>
                   <TableCell>
                     {formatNumber(metric.fe2o3, { decimals: 2 })}%
+                  </TableCell>
+                  <TableCell>
+                    {formatNumber(metric.c3s, { decimals: 1 })}%
+                  </TableCell>
+                  <TableCell>
+                    {formatNumber(metric.c2s, { decimals: 1 })}%
+                  </TableCell>
+                  <TableCell>
+                    {formatNumber(metric.c3a, { decimals: 1 })}%
+                  </TableCell>
+                  <TableCell>
+                    {formatNumber(metric.c4af, { decimals: 1 })}%
                   </TableCell>
                 </TableRow>
               ))}

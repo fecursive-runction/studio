@@ -17,7 +17,7 @@ export default async function HistoryPage() {
         </p>
       </div>
 
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-[95%]">
         <HistoryTable initialMetrics={metricsHistory} />
       </div>
     </main>

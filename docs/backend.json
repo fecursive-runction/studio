@@ -89,7 +89,7 @@
           "description": "The timestamp of the production metric.",
           "format": "date-time"
         },
-        "plantId": {
+        "plant_id": {
           "type": "string",
           "description": "Reference to Plant. (Relationship: Plant 1:N ProductionMetric)"
         },
@@ -120,18 +120,38 @@
         "fe2o3": {
           "type": "number",
           "description": "Percentage of Iron(III) Oxide (Fe2O3) in the raw mix."
+        },
+        "c3s": {
+          "type": "number",
+          "description": "Percentage of Tricalcium Silicate (C₃S) in the clinker."
+        },
+        "c2s": {
+          "type": "number",
+          "description": "Percentage of Dicalcium Silicate (C₂S) in the clinker."
+        },
+        "c3a": {
+          "type": "number",
+          "description": "Percentage of Tricalcium Aluminate (C₃A) in the clinker."
+        },
+        "c4af": {
+          "type": "number",
+          "description": "Percentage of Tetracalcium Aluminoferrite (C₄AF) in the clinker."
         }
       },
       "required": [
         "timestamp",
-        "plantId",
+        "plant_id",
         "kiln_temp",
         "feed_rate",
         "lsf",
         "cao",
         "sio2",
         "al2o3",
-        "fe2o3"
+        "fe2o3",
+        "c3s",
+        "c2s",
+        "c3a",
+        "c4af"
       ]
     },
     "AiRecommendation": {
@@ -363,5 +383,3 @@
     ]
   }
 }
-
-    

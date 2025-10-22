@@ -26,7 +26,11 @@ async function setupDatabase(db: Database) {
             cao REAL NOT NULL,
             sio2 REAL NOT NULL,
             al2o3 REAL NOT NULL,
-            fe2o3 REAL NOT NULL
+            fe2o3 REAL NOT NULL,
+            c3s REAL NOT NULL,
+            c2s REAL NOT NULL,
+            c3a REAL NOT NULL,
+            c4af REAL NOT NULL
         );
     `);
     console.log("Database table 'production_metrics' is ready.");

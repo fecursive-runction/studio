@@ -22,6 +22,10 @@ export async function getLiveMetrics() {
                 sio2: 14,
                 al2o3: 3.5,
                 fe2o3: 2.5,
+                c3s: 65,
+                c2s: 15,
+                c3a: 9,
+                c4af: 8,
             };
         }
 
@@ -33,6 +37,10 @@ export async function getLiveMetrics() {
             sio2: latestMetric.sio2,
             al2o3: latestMetric.al2o3,
             fe2o3: latestMetric.fe2o3,
+            c3s: latestMetric.c3s,
+            c2s: latestMetric.c2s,
+            c3a: latestMetric.c3a,
+            c4af: latestMetric.c4af,
         };
     } catch (e: any) {
         console.error("Failed to get live metrics from SQLite:", e);
@@ -45,6 +53,10 @@ export async function getLiveMetrics() {
             sio2: 14,
             al2o3: 3.5,
             fe2o3: 2.5,
+            c3s: 65,
+            c2s: 15,
+            c3a: 9,
+            c4af: 8,
         };
     }
 }
@@ -166,6 +178,14 @@ export async function applyOptimization(prevState: any, formData: FormData) {
 
     const newFeedRate = parseFloat(formData.get('feedRateSetpoint') as string);
     const newKilnTemp = currentMetrics.kilnTemperature + (lsf > 98 ? -5 : (lsf < 94 ? 5 : 0));
+    
+    // Recalculate Bogue's phases based on new composition
+    const freeLime = 1.5;
+    const cao_prime = newCao - freeLime;
+    const newC3S = Math.max(0, 4.071 * cao_prime - 7.602 * newSio2 - 6.719 * newAl2o3 - 1.430 * currentMetrics.fe2o3);
+    const newC2S = Math.max(0, 2.867 * newSio2 - 0.754 * newC3S);
+    const newC3A = Math.max(0, 2.650 * newAl2o3 - 1.692 * currentMetrics.fe2o3);
+    const newC4AF = Math.max(0, 3.043 * currentMetrics.fe2o3);
 
     try {
         const newMetricRecord = [
@@ -177,11 +197,15 @@ export async function applyOptimization(prevState: any, formData: FormData) {
             parseFloat(newCao.toFixed(2)),
             parseFloat(newSio2.toFixed(2)),
             parseFloat(newAl2o3.toFixed(2)),
-            parseFloat(currentMetrics.fe2o3.toFixed(2))
+            parseFloat(currentMetrics.fe2o3.toFixed(2)),
+            parseFloat(newC3S.toFixed(2)),
+            parseFloat(newC2S.toFixed(2)),
+            parseFloat(newC3A.toFixed(2)),
+            parseFloat(newC4AF.toFixed(2)),
         ];
         await db.run(
-            'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ...newMetricRecord
+            'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3, c3s, c2s, c3a, c4af) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            newMetricRecord
         );
         return { success: true, message: 'Optimization applied successfully!' };
     } catch (error: any) {
