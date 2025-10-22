@@ -1,159 +1,86 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a role-based access control model for a cement plant management system.
+ * @fileoverview Firestore Security Rules for Cement Plant Monitoring App
  *
  * Core Philosophy:
- * The security model centers around users and plants. Users have specific roles and are associated with one or more plants.
- * Access to plant-related data (sensor readings, raw material batches, etc.) is controlled based on the user's association with the plant.
- * User documents are secured using owner-only access.
+ * This ruleset prioritizes secure data access based on user roles and data ownership,
+ * while remaining flexible on data shapes during the prototyping phase.
+ * Strict authorization checks are enforced, but data validation is minimized to allow rapid iteration.
  *
  * Data Structure:
- * - /plants/{plantId}: Stores plant information.
- * - /plants/{plantId}/sensorReadings/{sensorReadingId}: Stores sensor readings for a specific plant.
- * - /plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId}: Stores raw material batch data for a specific plant.
- * - /plants/{plantId}/productionMetrics/{productionMetricId}: Stores production metrics for a specific plant.
- * - /plants/{plantId}/aiRecommendations/{aiRecommendationId}: Stores AI recommendations for a specific plant.
- * - /plants/{plantId}/alerts/{alertId}: Stores alerts for a specific plant.
- * - /users/{userId}: Stores user information, including a `plantIds` array indicating which plants the user has access to.
+ * - `/plant-metrics/live`: Stores the single, most recent live production metric for the entire plant. Public read access.
+ * - `/production_metrics/{metricId}`: Stores historical production metrics. Public read access.
+ * - `/users/{userId}`: Stores user profiles, accessible only to the user themselves.
  *
  * Key Security Decisions:
- * - User listing is denied.
- * - User creation is restricted to authenticated users creating their own profile.
- * - Plant-scoped data access is determined by checking if the user's `plantIds` array contains the plant ID. This denormalization avoids costly `get()` calls.
- * - The rules prioritize authorization and relational integrity checks. Data shape validation is relaxed for prototyping.
- *
- * Denormalization for Authorization:
- * - The `User` document includes a `plantIds` array. This allows checking a user's access to a plant without needing to read the Plant document itself. This is crucial for performance and scalability.
+ * - Public read access is granted for production metrics.
+ * - User listing is disallowed.
+ * - User profiles are private and only accessible to the user themselves.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows reading any plant document. Write operations are denied.
-     * @path /plants/{plantId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read, no write access.
+     * @description Allows anyone to read the single, most recent live production metric for the entire plant.
+     * @path /plant-metrics/live
+     * @allow (get, list) Any user can read live metrics.
+     * @deny (create, update, delete) No one can create, update, or delete live metrics through the client.
+     * @principle Public read access for live plant metrics.
      */
-    match /plants/{plantId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+    match /plant-metrics/live {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows reading sensor readings associated with a plant for authorized users. Write operations are denied.
-     * @path /plants/{plantId}/sensorReadings/{sensorReadingId}
-     * @allow get, list: if isAuthorizedForPlant(plantId);
-     * @deny create, update, delete: if false;
-     * @principle Plant-scoped data access controlled by user's plantIds.
+     * @description Allows anyone to read historical production metrics.
+     * @path /production_metrics/{metricId}
+     * @allow (get, list) Any user can read historical metrics.
+     * @deny (create, update, delete) No one can create, update, or delete historical metrics through the client.
+     * @principle Public read access for historical plant metrics.
      */
-    match /plants/{plantId}/sensorReadings/{sensorReadingId} {
-      allow get, list: if isAuthorizedForPlant(plantId);
-      allow create, update, delete: if false;
+    match /production_metrics/{metricId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows reading raw material batch information for authorized users. Write operations are denied.
-     * @path /plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId}
-     * @allow get, list: if isAuthorizedForPlant(plantId);
-     * @deny create, update, delete: if false;
-     * @principle Plant-scoped data access controlled by user's plantIds.
-     */
-    match /plants/{plantId}/rawMaterialBatches/{rawMaterialBatchId} {
-      allow get, list: if isAuthorizedForPlant(plantId);
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows reading production metrics for authorized users. Write operations are denied.
-     * @path /plants/{plantId}/productionMetrics/{productionMetricId}
-     * @allow get, list: if isAuthorizedForPlant(plantId);
-     * @deny create, update, delete: if false;
-     * @principle Plant-scoped data access controlled by user's plantIds.
-     */
-    match /plants/{plantId}/productionMetrics/{productionMetricId} {
-      allow get, list: if isAuthorizedForPlant(plantId);
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows reading AI recommendations for authorized users. Write operations are denied.
-     * @path /plants/{plantId}/aiRecommendations/{aiRecommendationId}
-     * @allow get, list: if isAuthorizedForPlant(plantId);
-     * @deny create, update, delete: if false;
-     * @principle Plant-scoped data access controlled by user's plantIds.
-     */
-    match /plants/{plantId}/aiRecommendations/{aiRecommendationId} {
-      allow get, list: if isAuthorizedForPlant(plantId);
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows reading alerts for authorized users. Write operations are denied.
-     * @path /plants/{plantId}/alerts/{alertId}
-     * @allow get, list: if isAuthorizedForPlant(plantId);
-     * @deny create, update, delete: if false;
-     * @principle Plant-scoped data access controlled by user's plantIds.
-     */
-    match /plants/{plantId}/alerts/{alertId} {
-      allow get, list: if isAuthorizedForPlant(plantId);
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows a user to create, read, update, and delete their own user document.
+     * @description Allows a user to read, create, update, and delete their own user profile.
      * @path /users/{userId}
-     * @allow create: if isSignedIn() && request.auth.uid == userId;
-     * @allow get: if isOwner(userId);
-     * @allow list: if false;
-     * @allow update: if isExistingOwner(userId);
-     * @allow delete: if isExistingOwner(userId);
-     * @principle Enforces document ownership for all operations on the user document.
+     * @allow (create) A user can create their profile if the userId matches their auth.uid.
+     * @allow (get, list) A user can read their own profile.
+     * @allow (update, delete) A user can update or delete their own profile.
+     * @deny (create) A user cannot create a profile with a userId that doesn't match their auth.uid.
+     * @deny (get, list) A user cannot read other user's profiles.
+     * @deny (update, delete) A user cannot update or delete other user's profiles.
+     * @principle Enforces document ownership for user profiles.
      */
     match /users/{userId} {
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow get: if isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
-    // ---- Helper functions ----
+    // --- Helper Functions ---
 
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the requesting user is the owner of the document, using request.auth.uid
-     * @param {string} userId The user ID to check against.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
-     /**
-      * @description Checks if the requesting user is the owner of an EXISTING document.
-      * @param {string} userId The user ID to check against.
-      * @return {bool} True if the user is the owner and resource exists, false otherwise.
-      */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Checks if the user is authorized to access data for a specific plant.
-     * @param {string} plantId The plant ID to check against.
-     * @return {bool} True if the user is authorized, false otherwise.
-     */
-    function isAuthorizedForPlant(plantId) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plantIds.hasAny([plantId]);
+        return isOwner(userId) && resource != null;
     }
   }
 }
