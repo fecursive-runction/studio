@@ -14,7 +14,7 @@ import { z } from 'genkit';
 const GenerateAlertsInputSchema = z.object({
   kilnTemperature: z.number().describe('The current temperature of the kiln in degrees Celsius.'),
   feedRate: z.number().describe('The current feed rate of raw materials in tons per hour.'),
-  lsf: z.string().describe('The current Lime Saturation Factor (LSF) of the raw mix, formatted as a string (e.g., "95.5").'),
+  lsf: z.number().describe('The current Lime Saturation Factor (LSF) of the raw mix.'),
 });
 export type GenerateAlertsInput = z.infer<typeof GenerateAlertsInputSchema>;
 

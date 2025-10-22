@@ -172,7 +172,7 @@ export async function getAiAlerts() {
         const alertResponse = await generateAlerts({
             kilnTemperature: liveMetrics.kilnTemperature,
             feedRate: liveMetrics.feedRate,
-            lsf: liveMetrics.lsf.toFixed(1),
+            lsf: liveMetrics.lsf,
         });
 
         // Add a timestamp to each alert
