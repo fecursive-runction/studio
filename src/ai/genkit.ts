@@ -8,8 +8,8 @@ export const ai = genkit({
       apiVersion: 'v1beta',
     }),
   ],
-  // Use a known, stable model and specify it correctly.
-  model: 'gemini-pro',
+  // Use the user-specified model, with the correct syntax.
+  model: googleAI.model('gemini-1.5-pro-latest'),
   // Reduce retries to fail faster on persistent errors.
   retries: 1,
   // Add a timeout to prevent requests from hanging indefinitely.
