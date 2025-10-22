@@ -63,7 +63,13 @@ const prompt = ai.definePrompt({
 
     Generate a unique ID for this recommendation.
     
-    ONLY output the JSON object with the recommendation ID, feed rate, and adjustments. Do NOT provide an explanation.
+    ONLY output a valid JSON object matching the output schema.
+    - recommendationId: A unique string ID.
+    - feedRateSetpoint: A number representing the recommended feed rate.
+    - limestoneAdjustment: A string representing the percentage change, e.g., "+1.2%".
+    - clayAdjustment: A string representing the percentage change, e.g., "-0.8%".
+
+    Do NOT provide an explanation or any other text outside the JSON object.
     `,
   });
   
@@ -80,4 +86,5 @@ const prompt = ai.definePrompt({
   );
 
     
+
 
