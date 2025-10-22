@@ -19,26 +19,33 @@ const GenerateExplanationInputSchema = z.object({
 });
 export type GenerateExplanationInput = z.infer<typeof GenerateExplanationInputSchema>;
 
-export async function generateExplanation(input: GenerateExplanationInput): Promise<string> {
-  const explanationFlow = ai.defineFlow(
-    {
-      name: 'generateExplanationFlow',
-      inputSchema: GenerateExplanationInputSchema,
-      outputSchema: z.string(),
-    },
-    async (input) => {
-      const prompt = `Based on the following data, provide a clear, concise explanation for the recommendation.
-        - Current LSF: ${input.lsf.toFixed(1)}%
-        - Recommended Limestone Adjustment: ${input.limestoneAdjustment}
-        - Recommended Clay Adjustment: ${input.clayAdjustment}
-        - Predicted LSF: ${input.predictedLSF.toFixed(1)}%
-        
-        Explain the trade-offs involved, particularly how adjustments to the raw mix (limestone for CaO, clay for SiO2/Al2O3) affect the LSF to bring it into the ideal range of 94-98%.`;
-      
-      const { text } = await ai.generate({ prompt });
-      return text;
-    }
-  );
+const explanationPrompt = ai.definePrompt({
+  name: 'generateExplanationPrompt',
+  input: { schema: GenerateExplanationInputSchema },
+  output: { schema: z.string() },
+  prompt: `Based on the following data, provide a clear, concise explanation for the recommendation.
+    - Current LSF: {{{lsf}}}%
+    - Recommended Limestone Adjustment: {{{limestoneAdjustment}}}
+    - Recommended Clay Adjustment: {{{clayAdjustment}}}
+    - Predicted LSF: {{{predictedLSF}}}%
+    
+    Explain the trade-offs involved, particularly how adjustments to the raw mix (limestone for CaO, clay for SiO2/Al2O3) affect the LSF to bring it into the ideal range of 94-98%.`,
+});
 
+
+const explanationFlow = ai.defineFlow(
+  {
+    name: 'generateExplanationFlow',
+    inputSchema: GenerateExplanationInputSchema,
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    const { text } = await explanationPrompt(input);
+    return text;
+  }
+);
+
+
+export async function generateExplanation(input: GenerateExplanationInput): Promise<string> {
   return explanationFlow(input);
 }
