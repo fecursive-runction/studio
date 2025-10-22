@@ -13,19 +13,25 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, Zap, Award, Gauge, Lightbulb, Thermometer, FlaskConical, TrendingUp } from 'lucide-react';
+import { Bot, Zap, Lightbulb, Thermometer, FlaskConical, TrendingUp, CheckCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
-import { runOptimization, getLiveMetrics } from '@/app/actions';
+import { runOptimization, getLiveMetrics, applyOptimization } from '@/app/actions';
 import { Badge } from '../ui/badge';
 import { formatNumber } from '@/lib/utils';
 
 
-const initialState = {
+const initialOptimizationState = {
   recommendation: null,
   error: null,
 };
+
+const initialApplyState = {
+    success: false,
+    message: '',
+};
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -44,41 +50,78 @@ function SubmitButton() {
   );
 }
 
+function ApplyButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" variant="secondary" size="sm" disabled={pending} className="w-full md:w-auto">
+            {pending ? 'Applying...' : 'Apply Recommendation'}
+        </Button>
+    )
+}
+
 
 function RecommendationDisplay({ recommendation }: { recommendation: any }) {
     if (!recommendation) return null;
+    const [state, formAction] = useActionState(applyOptimization, initialApplyState);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (state.message) {
+            toast({
+                title: state.success ? "Success" : "Error",
+                description: state.message,
+                variant: state.success ? "default" : "destructive",
+            });
+        }
+    }, [state, toast]);
   
     return (
-      <div className="space-y-6">
-        <div>
-            <p className="text-sm text-muted-foreground">Recommendation ID</p>
-            <Badge variant="outline">{recommendation.recommendationId}</Badge>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          <div className="flex flex-col gap-1">
-            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><FlaskConical /> Limestone Adj.</Label>
-            <p className="text-xl font-bold">{recommendation.limestoneAdjustment}</p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><FlaskConical /> Clay Adj.</Label>
-            <p className="text-xl font-bold">{recommendation.clayAdjustment}</p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><TrendingUp /> Predicted LSF</Label>
-            <p className="text-xl font-bold text-green-500">{formatNumber(recommendation.predictedLSF, { decimals: 1 })}%</p>
-          </div>
-        </div>
+        <div className="space-y-6">
+            <div>
+                <p className="text-sm text-muted-foreground">Recommendation ID</p>
+                <Badge variant="outline">{recommendation.recommendationId}</Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-1">
+                <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><FlaskConical /> Limestone Adj.</Label>
+                <p className="text-xl font-bold">{recommendation.limestoneAdjustment}</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><FlaskConical /> Clay Adj.</Label>
+                <p className="text-xl font-bold">{recommendation.clayAdjustment}</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><TrendingUp /> Predicted LSF</Label>
+                <p className="text-xl font-bold text-green-500">{formatNumber(recommendation.predictedLSF, { decimals: 1 })}%</p>
+              </div>
+            </div>
 
-        <Separator />
-  
-        <div className="space-y-2">
-            <h4 className="font-semibold flex items-center gap-2"><Lightbulb /> Explanation</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-                {recommendation.explanation}
-            </p>
+            <Separator />
+    
+            <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2"><Lightbulb /> Explanation</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                    {recommendation.explanation}
+                </p>
+            </div>
+
+            <Separator />
+
+            <form action={formAction} className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-lg bg-muted p-4">
+                <input type="hidden" name="recommendationId" value={recommendation.recommendationId} />
+                <input type="hidden" name="limestoneAdjustment" value={recommendation.limestoneAdjustment} />
+                <input type="hidden" name="clayAdjustment" value={recommendation.clayAdjustment} />
+                <input type="hidden" name="predictedLSF" value={recommendation.predictedLSF} />
+                <input type="hidden" name="feedRateSetpoint" value={recommendation.feedRateSetpoint} />
+                
+                <div className='flex-1'>
+                    <h4 className="font-semibold flex items-center gap-2"><CheckCircle /> Apply Changes</h4>
+                    <p className="text-xs text-muted-foreground">Simulate applying this recommendation. A new data point will be added to the database.</p>
+                </div>
+                { state.success ? <p className="text-sm text-green-500 font-medium">Applied!</p> : <ApplyButton /> }
+            </form>
         </div>
-      </div>
     );
 }
 
@@ -93,7 +136,7 @@ type Metrics = {
 }
   
 export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics & { trigger?: boolean } }) {
-  const [state, formAction] = useActionState(runOptimization, initialState);
+  const [state, formAction] = useActionState(runOptimization, initialOptimizationState);
   const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
@@ -159,7 +202,7 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
                     { !metrics ? <Skeleton className="h-32" /> : (
                         <div className="space-y-2 text-sm text-muted-foreground">
                             <p className="flex justify-between"><span><Thermometer className="inline h-4 w-4 mr-1"/>Kiln Temp:</span> <span className="font-mono text-foreground">{formatNumber(metrics.kilnTemperature!)} °C</span></p>
-                            <p className="flex justify-between"><span><Gauge className="inline h-4 w-4 mr-1"/>Feed Rate:</span> <span className="font-mono text-foreground">{formatNumber(metrics.feedRate!)} TPH</span></p>
+                            <p className="flex justify-between"><span><Zap className="inline h-4 w-4 mr-1"/>Feed Rate:</span> <span className="font-mono text-foreground">{formatNumber(metrics.feedRate!)} TPH</span></p>
                             <p className="font-bold flex justify-between mt-2 pt-2 border-t"><span><FlaskConical className="inline h-4 w-4 mr-1"/>LSF:</span> <span className="font-mono text-foreground">{formatNumber(metrics.lsf!, {decimals: 1})}%</span></p>
                             <p className="flex justify-between text-xs"><span>CaO:</span> <span className="font-mono text-foreground">{formatNumber(metrics.cao!)}%</span></p>
                             <p className="flex justify-between text-xs"><span>SiO₂:</span> <span className="font-mono text-foreground">{formatNumber(metrics.sio2!)}%</span></p>
@@ -194,9 +237,9 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {pending && <Skeleton className="h-[240px]" />}
+            {pending && <Skeleton className="h-[340px]" />}
             {!pending && !state.recommendation && (
-                <div className="flex h-[240px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
+                <div className="flex h-[340px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
                     <Bot className="h-12 w-12 text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">
                         { initialMetrics.trigger ? 'Generating recommendation...' : 'Your recommendation will appear here.'}
@@ -211,3 +254,5 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
     </div>
   );
 }
+
+    

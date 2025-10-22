@@ -160,7 +160,7 @@ export default function DashboardPage() {
                           title="Feed Rate"
                           value={(metricsData.feedRate || 0).toFixed(1)}
                           unit="TPH"
-                          icon="Gauge"
+                          icon="Zap"
                       />
                        <MetricCard
                           title="Lime Saturation (LSF)"
@@ -255,3 +255,5 @@ export default function DashboardPage() {
       </main>
   );
 }
+
+    

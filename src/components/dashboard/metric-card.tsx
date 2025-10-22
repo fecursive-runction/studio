@@ -8,14 +8,12 @@ import {
   CardDescription
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Thermometer, Gauge, Zap, Award, FlaskConical, Beaker, Component } from 'lucide-react';
+import { Thermometer, Zap, FlaskConical, Beaker, Component } from 'lucide-react';
 import React from 'react';
 
 const iconMap = {
   Thermometer,
-  Gauge,
-  Zap,
-  Award,
+  Zap, // Changed from Gauge
   FlaskConical,
   Beaker,
   Component,
@@ -56,3 +54,5 @@ export function MetricCard({
     </Card>
   );
 }
+
+    
