@@ -116,6 +116,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
     };
   }
   const { constraints, ...metrics } = validatedFields.data;
+  
   const currentMetrics = {
     plantId: "poc_plant_01",
     kilnTemperature: Number(metrics.kilnTemperature),
@@ -125,7 +126,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
     sio2: Number(metrics.sio2),
     al2o3: Number(metrics.al2o3),
     fe2o3: Number(metrics.fe2o3),
-    constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
+    constraints: (constraints && constraints.trim().length > 0) ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
   };
 
 
@@ -269,3 +270,5 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
+
+    
