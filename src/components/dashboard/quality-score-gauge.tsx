@@ -1,6 +1,6 @@
 'use client';
 
-import { Pie, PieChart, ResponsiveContainer, Cell, Label, ReferenceLine } from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 
 type QualityScoreGaugeProps = {
   value: number;
@@ -55,9 +55,6 @@ export function QualityScoreGauge({ value, maxValue, idealMin, idealMax, label }
               className="text-sm"
             />
           </Pie>
-           {/* Adding lines for ideal range */}
-           <ReferenceLine angle={180 - (180 * idealMin / maxValue)} stroke="hsl(var(--foreground))" strokeDasharray="3 3" />
-           <ReferenceLine angle={180 - (180 * idealMax / maxValue)} stroke="hsl(var(--foreground))" strokeDasharray="3 3" />
         </PieChart>
       </ResponsiveContainer>
     </div>
