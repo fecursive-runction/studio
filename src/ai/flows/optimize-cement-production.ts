@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const OptimizeCementProductionInputSchema = z.object({
   plantId: z.string().describe('The ID of the cement plant.'),
@@ -54,7 +54,7 @@ const prompt = ai.definePrompt({
         - Fe2O3: {{{fe2o3}}}%
     - Current LSF: {{{lsf}}}%
 
-    Operational Constraints:
+    The following are natural language operational constraints. Interpret them to guide your recommendation.
     {{#each constraints}}
     - {{{this}}}
     {{/each}}
@@ -80,3 +80,4 @@ const prompt = ai.definePrompt({
   );
 
     
+

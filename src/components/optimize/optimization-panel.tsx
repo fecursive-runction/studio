@@ -173,7 +173,7 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
                         <Textarea
                             id="constraints"
                             name="constraints"
-                            placeholder="e.g., LSF_TARGET_95, MAX_TEMP_1480"
+                            placeholder="e.g., Keep kiln temp below 1480°C, LSF target is 96%"
                             className="min-h-[80px]"
                             disabled={pending}
                         />
