@@ -131,18 +131,8 @@ export async function runOptimization(prevState: any, formData: FormData) {
 
   try {
     // 1. Get core recommendation (fast)
-    const optimizationRequest = optimizeCementProduction(currentMetrics);
+    const aiCoreRecommendation = await optimizeCementProduction(currentMetrics);
 
-    const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-            reject(new Error("AI recommendation request timed out after 25 seconds. The service may be busy. Please try again."));
-        }, 25000); // 25 seconds
-    });
-
-    const aiCoreRecommendation = await Promise.race([
-        optimizationRequest,
-        timeoutPromise
-    ]);
 
     // 2. Calculate predicted LSF in code
     const predictedLSF = calculatePredictedLsf(currentMetrics.lsf, aiCoreRecommendation.limestoneAdjustment, aiCoreRecommendation.clayAdjustment);
@@ -279,5 +269,3 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
-
-    
