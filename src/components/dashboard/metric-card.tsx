@@ -7,8 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { TrendingDown, TrendingUp, Thermometer, Gauge, Zap, Award } from 'lucide-react';
-import type { LucideProps } from 'lucide-react';
+import { Thermometer, Gauge, Zap, Award } from 'lucide-react';
 import React from 'react';
 
 const iconMap = {
@@ -23,7 +22,7 @@ type MetricCardProps = {
   value: string;
   unit: string;
   icon: keyof typeof iconMap;
-  trend: number;
+  trend?: number;
 };
 
 export function MetricCard({
@@ -31,10 +30,8 @@ export function MetricCard({
   value,
   unit,
   icon,
-  trend,
 }: MetricCardProps) {
-  const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
-  const trendColor = trend >= 0 ? 'text-green-500' : 'text-red-500';
+
   const Icon = iconMap[icon];
 
   return (
@@ -47,10 +44,8 @@ export function MetricCard({
         <div className="text-2xl font-bold">
           {value} <span className="text-base font-normal text-muted-foreground">{unit}</span>
         </div>
-        <p className={cn('text-xs text-muted-foreground flex items-center', trendColor)}>
-          <TrendIcon className="mr-1 h-3 w-3" />
-          {trend >= 0 ? '+' : ''}
-          {trend.toFixed(2)}% from last hour
+        <p className={'text-xs text-muted-foreground flex items-center'}>
+          Live data
         </p>
       </CardContent>
     </Card>

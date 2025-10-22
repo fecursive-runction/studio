@@ -11,29 +11,26 @@ import {
   BarChart,
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
-import { alerts as mockAlerts, liveMetrics, historicalTemperatureData } from '@/lib/data';
+import { alerts as mockAlerts, historicalTemperatureData } from '@/lib/data';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-
+import { useDocument } from 'react-firebase-hooks/firestore';
+import { doc, getFirestore } from 'firebase/firestore';
+import { app } from '@/firebase/client';
 
 export default function DashboardPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [liveMetrics, loading, error] = useDocument(doc(getFirestore(app), 'plant-metrics', 'live'));
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-        setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  const metricsData = liveMetrics?.data();
 
   const chartData = historicalTemperatureData.map((d, i) => i % 36 === 0 ? d : ({...d, time: ''}));
 
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-            {isLoading ? (
+            {loading ? (
                 <>
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
@@ -44,31 +41,27 @@ export default function DashboardPage() {
                 <>
                     <MetricCard
                         title="Kiln Temperature"
-                        value={liveMetrics.kiln_temp.toFixed(1)}
+                        value={(metricsData?.kiln_temp || 0).toFixed(1)}
                         unit="°C"
                         icon="Thermometer"
-                        trend={liveMetrics.kiln_temp_trend || 0}
                     />
                     <MetricCard
                         title="Feed Rate"
-                        value={liveMetrics.feed_rate.toFixed(1)}
+                        value={(metricsData?.feed_rate || 0).toFixed(1)}
                         unit="TPH"
                         icon="Gauge"
-                        trend={liveMetrics.feed_rate_trend || 0}
                     />
                     <MetricCard
                         title="Energy Consumption"
-                        value={liveMetrics.energy_kwh.toFixed(1)}
+                        value={(metricsData?.energy_kwh_per_ton || 0).toFixed(1)}
                         unit="kWh/t"
                         icon="Zap"
-                        trend={liveMetrics.energy_kwh_trend || 0}
                     />
                     <MetricCard
                         title="Clinker Quality"
-                        value={liveMetrics.quality_score.toFixed(3)}
+                        value={(metricsData?.clinker_quality_score || 0).toFixed(3)}
                         unit="Score"
                         icon="Award"
-                        trend={liveMetrics.quality_score_trend || 0}
                     />
                 </>
             )}
@@ -82,7 +75,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              {isLoading ? (
+              {loading ? (
                 <Skeleton className="h-[350px]" />
               ) : (
                 <TemperatureChart data={chartData} />
@@ -98,10 +91,10 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {loading ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
-                    <QualityScoreGauge value={liveMetrics.quality_score} />
+                    <QualityScoreGauge value={metricsData?.clinker_quality_score || 0} />
                 )}
               </CardContent>
             </Card>

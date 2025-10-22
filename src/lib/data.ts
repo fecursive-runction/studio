@@ -1,15 +1,4 @@
 
-export const liveMetrics = {
-  kiln_temp: 1452.1,
-  kiln_temp_trend: 0.5,
-  feed_rate: 220.8,
-  feed_rate_trend: -1.2,
-  energy_kwh: 101.3,
-  energy_kwh_trend: 0.1,
-  quality_score: 0.914,
-  quality_score_trend: -0.002,
-};
-
 export const alerts = [
   {
     id: 'alert_xyz',

@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^8.0.0",
+    "@google-cloud/firestore": "^7.7.0",
     "@google-cloud/pubsub": "^4.5.0",
     "@genkit-ai/google-genai": "^1.20.0",
     "@genkit-ai/next": "^1.20.0",
@@ -24,6 +24,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
+    "firebase": "^10.12.2",
     "genkit": "^1.20.0",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
@@ -31,6 +32,7 @@
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
+    "react-firebase-hooks": "^5.1.1",
     "react-hook-form": "^7.54.2",
     "react-icons": "^5.2.1",
     "recharts": "^2.15.1",

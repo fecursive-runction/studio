@@ -1,31 +1,21 @@
 
 import { NextResponse } from 'next/server';
-import { insertIntoBigQuery } from '@/services/bigquery';
-
-// The ID of your BigQuery dataset
-const DATASET_ID = 'cement_plant_data'; 
-// The ID of the table you want to insert rows into
-const TABLE_ID = 'production_metrics';
+import { Firestore } from '@google-cloud/firestore';
 
 // Function to generate a random number within a range
 const getRandom = (min: number, max: number, decimals: number = 2) => {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
 };
 
+const firestore = new Firestore();
 
 /**
  * API route handler for ingesting data.
- * This endpoint is triggered by a Pub/Sub push subscription.
- * It generates a new mock production metric and inserts it into BigQuery.
+ * This endpoint can be triggered by a scheduler (e.g., Cloud Scheduler).
+ * It generates a new mock production metric and saves it to Firestore.
  */
 export async function POST(req: Request) {
   try {
-    // Pub/Sub push subscriptions send a POST request with the message in the body.
-    // We don't need to process the message data for this use case,
-    // as the notification itself is the trigger.
-    const body = await req.json();
-    console.log('Received Pub/Sub message:', body);
-
     // Generate a new production metric record
     const newMetric = {
         timestamp: new Date().toISOString(),
@@ -36,8 +26,12 @@ export async function POST(req: Request) {
         clinker_quality_score: getRandom(0.88, 0.95, 3),
     };
 
-    // Insert the new metric into the BigQuery table
-    await insertIntoBigQuery(DATASET_ID, TABLE_ID, newMetric);
+    // Save the new metric to a specific document in Firestore for live data
+    // This overwrites the previous live metric with the new one.
+    const docRef = firestore.collection('plant-metrics').doc('live');
+    await docRef.set(newMetric);
+
+    console.log('Ingested new live metric:', newMetric);
 
     // Respond with success
     return NextResponse.json({ success: true, message: 'Data ingested successfully.', ingested_data: newMetric }, { status: 200 });

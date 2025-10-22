@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  BrainCircuit,
   Bot,
 } from 'lucide-react';
 import {
@@ -23,11 +22,6 @@ export function MainNav({ isMobile = false }: { isMobile?: boolean }) {
       href: '/',
       label: 'Dashboard',
       icon: LayoutDashboard,
-    },
-    {
-      href: '/analytics',
-      label: 'Analytics',
-      icon: BrainCircuit,
     },
     {
       href: '/optimize',

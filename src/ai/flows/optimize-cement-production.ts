@@ -24,10 +24,10 @@ export type OptimizeCementProductionInput = z.infer<typeof OptimizeCementProduct
 const OptimizeCementProductionOutputSchema = z.object({
   recommendationId: z.string().describe('A unique ID for the recommendation, e.g., "REC-20240521-001".'),
   feedRateSetpoint: z.number().describe('The recommended feed rate setpoint in tons per hour.'),
-  fuelMixRatio: z.number().describe('The recommended fuel mix ratio, e.g., 0.8 for 80% primary fuel.'),
+  kilnRotationSpeed: z.number().describe('The recommended kiln rotation speed in RPM.'),
   energyReductionPercentage: z.number().describe('The predicted percentage reduction in energy consumption.'),
   qualityScoreImpact: z.string().describe('The predicted impact on the clinker quality score as a string, e.g., "+0.01", "-0.005".'),
-  explanation: z.string().describe('A clear, concise explanation of why this recommendation is being made, referencing the input data and constraints.'),
+  explanation: z.string().describe('A clear, concise explanation of why this recommendation is being made, referencing the input data and constraints. Explain the trade-offs involved.'),
   timestamp: z.string().datetime().describe('The ISO 8601 timestamp of when the recommendation was generated.'),
 });
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
@@ -56,9 +56,9 @@ const prompt = ai.definePrompt({
   
     Your goal is to recommend setpoints that reduce energy consumption while maintaining or improving clinker quality, respecting all constraints.
   
-    Generate a unique ID for this recommendation. Calculate the recommended feed rate, a new fuel mix ratio, and predict the impact on energy use and quality.
+    Generate a unique ID for this recommendation. Calculate the recommended feed rate, a new kiln rotation speed, and predict the impact on energy use and quality.
     
-    Provide a clear, data-driven explanation for your recommendation. The timestamp should be the current time in ISO 8601 format.
+    Provide a detailed, data-driven explanation for your recommendation. The explanation should be thorough, discussing the relationships between the parameters and the predicted outcomes. The timestamp should be the current time in ISO 8601 format.
     
     Output a single JSON object adhering to the specified output schema.
     `,
