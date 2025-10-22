@@ -143,9 +143,10 @@ export async function getAiAlerts() {
             lsf: liveMetrics.lsf,
         });
 
-        // Add a timestamp to each alert
-        return alertResponse.alerts.map(alert => ({
+        // Add a timestamp and unique ID to each alert
+        return alertResponse.alerts.map((alert, index) => ({
             ...alert,
+            id: `alert-${Date.now()}-${index}`, // Generate a robust, unique ID
             timestamp: new Date(),
         }));
 
