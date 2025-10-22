@@ -99,13 +99,13 @@ export async function runOptimization(prevState: any, formData: FormData) {
   
   const currentMetrics = {
     plantId: "poc_plant_01",
-    kilnTemperature: Number(metrics.kilnTemperature),
-    feedRate: Number(metrics.feedRate),
-    lsf: Number(metrics.lsf),
-    cao: Number(metrics.cao),
-    sio2: Number(metrics.sio2),
-    al2o3: Number(metrics.al2o3),
-    fe2o3: Number(metrics.fe2o3),
+    kilnTemperature: parseFloat(metrics.kilnTemperature),
+    feedRate: parseFloat(metrics.feedRate),
+    lsf: parseFloat(metrics.lsf),
+    cao: parseFloat(metrics.cao),
+    sio2: parseFloat(metrics.sio2),
+    al2o3: parseFloat(metrics.al2o3),
+    fe2o3: parseFloat(metrics.fe2o3),
     constraints: (constraints && constraints.trim().length > 0) ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
   };
 
@@ -229,3 +229,4 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
+    
