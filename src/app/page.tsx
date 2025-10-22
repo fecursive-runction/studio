@@ -62,13 +62,17 @@ export default function DashboardPage() {
     const fetchAndSetData = async () => {
         setLoading(true);
         try {
-            const data = await getLiveMetrics();
+            // Fetch metrics and alerts in parallel to speed up loading
+            const [data, aiAlerts] = await Promise.all([
+                getLiveMetrics(),
+                getAiAlerts(),
+            ]);
+
             if (data) {
                 setMetricsData(data);
-                const aiAlerts = await getAiAlerts();
-                if (aiAlerts) {
-                    setAlerts(aiAlerts);
-                }
+            }
+            if (aiAlerts) {
+                setAlerts(aiAlerts);
             }
         } catch(e) {
             console.error("Failed to fetch metrics or alerts", e);

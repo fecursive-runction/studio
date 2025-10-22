@@ -7,25 +7,30 @@ import sqlite3 from 'sqlite3';
 let dbPromise: Promise<Database<sqlite3.Database, sqlite3.Statement>> | null = null;
 
 async function setupDatabase(db: Database) {
-    // Drop the old table if it exists to apply new schema
-    await db.exec('DROP TABLE IF EXISTS production_metrics');
-    
-    // Create the new table with chemical composition fields
-    await db.exec(`
-        CREATE TABLE production_metrics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            plant_id TEXT NOT NULL,
-            kiln_temp REAL NOT NULL,
-            feed_rate REAL NOT NULL,
-            lsf REAL NOT NULL,
-            cao REAL NOT NULL,
-            sio2 REAL NOT NULL,
-            al2o3 REAL NOT NULL,
-            fe2o3 REAL NOT NULL
-        );
-    `);
-    console.log("Database table 'production_metrics' is ready with new chemical schema.");
+    // Check if the table already exists.
+    const tableExists = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='production_metrics'");
+
+    if (!tableExists) {
+        console.log("Table 'production_metrics' not found. Creating it now.");
+        // Create the new table with chemical composition fields
+        await db.exec(`
+            CREATE TABLE production_metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                plant_id TEXT NOT NULL,
+                kiln_temp REAL NOT NULL,
+                feed_rate REAL NOT NULL,
+                lsf REAL NOT NULL,
+                cao REAL NOT NULL,
+                sio2 REAL NOT NULL,
+                al2o3 REAL NOT NULL,
+                fe2o3 REAL NOT NULL
+            );
+        `);
+        console.log("Database table 'production_metrics' is ready.");
+    } else {
+        console.log("Database table 'production_metrics' already exists.");
+    }
 }
 
 
