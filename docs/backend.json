@@ -77,11 +77,12 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ProductionMetric",
       "type": "object",
-      "description": "Represents aggregated production metrics for the cement plant.",
+      "description": "Represents aggregated production metrics for the cement plant, including chemical composition and Bogue's phases.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the production metric record."
+          "type": "integer",
+          "description": "Unique identifier for the production metric record.",
+          "readOnly": true
         },
         "timestamp": {
           "type": "string",
@@ -100,23 +101,57 @@
           "type": "number",
           "description": "Raw material feed rate in tons per hour"
         },
-        "energy_kwh_per_ton": {
+        "lsf": {
           "type": "number",
-          "description": "Energy consumption in kWh per ton"
+          "description": "Lime Saturation Factor, a quality indicator for the raw mix."
         },
-        "clinker_quality_score": {
+        "cao": {
           "type": "number",
-          "description": "A score from 0-1"
+          "description": "Percentage of Calcium Oxide (CaO) in the raw mix."
+        },
+        "sio2": {
+          "type": "number",
+          "description": "Percentage of Silicon Dioxide (SiO2) in the raw mix."
+        },
+        "al2o3": {
+          "type": "number",
+          "description": "Percentage of Aluminum Oxide (Al2O3) in the raw mix."
+        },
+        "fe2o3": {
+          "type": "number",
+          "description": "Percentage of Iron(III) Oxide (Fe2O3) in the raw mix."
+        },
+        "c3s": {
+          "type": "number",
+          "description": "Percentage of Tricalcium Silicate (Alite), a Bogue's phase."
+        },
+        "c2s": {
+          "type": "number",
+          "description": "Percentage of Dicalcium Silicate (Belite), a Bogue's phase."
+        },
+        "c3a": {
+          "type": "number",
+          "description": "Percentage of Tricalcium Aluminate, a Bogue's phase."
+        },
+        "c4af": {
+          "type": "number",
+          "description": "Percentage of Tetracalcium Aluminoferrite, a Bogue's phase."
         }
       },
       "required": [
-        "id",
         "timestamp",
         "plant_id",
         "kiln_temp",
         "feed_rate",
-        "energy_kwh_per_ton",
-        "clinker_quality_score"
+        "lsf",
+        "cao",
+        "sio2",
+        "al2o3",
+        "fe2o3",
+        "c3s",
+        "c2s",
+        "c3a",
+        "c4af"
       ]
     },
     "AiRecommendation": {
@@ -348,3 +383,5 @@
     ]
   }
 }
+
+    

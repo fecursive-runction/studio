@@ -96,3 +96,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'Failed to ingest data.', error: error.message }, { status: 500 });
   }
 }
+
+    

@@ -1,3 +1,4 @@
+
 'use server';
 import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
@@ -19,7 +20,7 @@ async function setupDatabase(db: Database) {
 
     if (!tableExists) {
         console.log("Table 'production_metrics' not found. Creating it now.");
-        // Create the new table with chemical composition and Bogue's fields
+        // Create the new table with chemical composition and Bogue's fields, matching backend.json
         await db.exec(`
             CREATE TABLE production_metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,3 +58,5 @@ export async function getDb() {
   }
   return dbPromise;
 }
+
+    
