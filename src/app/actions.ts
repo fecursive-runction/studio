@@ -30,7 +30,7 @@ export async function getLiveMetrics() {
             lsf: latestMetric.lsf,
             cao: latestMetric.cao,
             sio2: latestMetric.sio2,
-            al2o3: latestMetric.al2o3,
+al2o3: latestMetric.al2o3,
             fe2o3: latestMetric.fe2o3,
         };
     } catch (e: any) {
@@ -74,7 +74,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
   const { constraints, ...metrics } = validatedFields.data;
 
   try {
-    const recommendation = await optimizeCementProduction({
+    const optimizationRequest = optimizeCementProduction({
         plantId: "poc_plant_01",
         kilnTemperature: Number(metrics.kilnTemperature),
         feedRate: Number(metrics.feedRate),
@@ -85,6 +85,19 @@ export async function runOptimization(prevState: any, formData: FormData) {
         fe2o3: Number(metrics.fe2o3),
         constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
     });
+
+    // Create a timeout promise that rejects in 25 seconds
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+            reject(new Error("AI recommendation request timed out after 25 seconds. The service may be busy. Please try again."));
+        }, 25000); // 25 seconds
+    });
+
+    // Race the AI request against the timeout
+    const recommendation = await Promise.race([
+        optimizationRequest,
+        timeoutPromise
+    ]);
     
     return {
       error: null,
