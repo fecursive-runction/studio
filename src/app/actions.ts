@@ -1,6 +1,7 @@
 'use server';
 
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
+import { generateExplanation } from '@/ai/flows/generate-explanation';
 import { generateAlerts } from '@/ai/flows/generate-alerts';
 import { z } from 'zod';
 import { getDb } from '@/lib/db';
@@ -92,44 +93,56 @@ export async function runOptimization(prevState: any, formData: FormData) {
     };
   }
   const { constraints, ...metrics } = validatedFields.data;
+  const currentMetrics = {
+    plantId: "poc_plant_01",
+    kilnTemperature: Number(metrics.kilnTemperature),
+    feedRate: Number(metrics.feedRate),
+    lsf: Number(metrics.lsf),
+    cao: Number(metrics.cao),
+    sio2: Number(metrics.sio2),
+    al2o3: Number(metrics.al2o3),
+    fe2o3: Number(metrics.fe2o3),
+    constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
+  };
+
 
   try {
-    const optimizationRequest = optimizeCementProduction({
-        plantId: "poc_plant_01",
-        kilnTemperature: Number(metrics.kilnTemperature),
-        feedRate: Number(metrics.feedRate),
-        lsf: Number(metrics.lsf),
-        cao: Number(metrics.cao),
-        sio2: Number(metrics.sio2),
-        al2o3: Number(metrics.al2o3),
-        fe2o3: Number(metrics.fe2o3),
-        constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
-    });
+    // 1. Get core recommendation (fast)
+    const optimizationRequest = optimizeCementProduction(currentMetrics);
 
-    // Create a timeout promise that rejects in 25 seconds
     const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
             reject(new Error("AI recommendation request timed out after 25 seconds. The service may be busy. Please try again."));
         }, 25000); // 25 seconds
     });
 
-    // Race the AI request against the timeout
-    const aiRecommendation = await Promise.race([
+    const aiCoreRecommendation = await Promise.race([
         optimizationRequest,
         timeoutPromise
     ]);
 
-    // Manually add the predicted LSF and timestamp after getting the AI response
-    const predictedLSF = calculatePredictedLsf(Number(metrics.lsf), aiRecommendation.limestoneAdjustment, aiRecommendation.clayAdjustment);
-    const recommendation = {
-        ...aiRecommendation,
+    // 2. Calculate predicted LSF in code
+    const predictedLSF = calculatePredictedLsf(currentMetrics.lsf, aiCoreRecommendation.limestoneAdjustment, aiCoreRecommendation.clayAdjustment);
+    
+    // 3. Get explanation (slower, but happens after core results are known)
+    const explanation = await generateExplanation({
+        ...currentMetrics,
+        ...aiCoreRecommendation,
+        predictedLSF,
+    });
+
+
+    // 4. Combine results
+    const finalRecommendation = {
+        ...aiCoreRecommendation,
         predictedLSF: predictedLSF,
         timestamp: new Date().toISOString(),
+        explanation,
     };
     
     return {
       error: null,
-      recommendation,
+      recommendation: finalRecommendation,
     };
 
   } catch (e: any) {
@@ -169,5 +182,3 @@ export async function getAiAlerts() {
         }];
     }
 }
-
-    

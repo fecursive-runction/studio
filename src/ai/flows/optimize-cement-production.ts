@@ -24,13 +24,12 @@ const OptimizeCementProductionInputSchema = z.object({
 });
 export type OptimizeCementProductionInput = z.infer<typeof OptimizeCementProductionInputSchema>;
 
-// The AI is now only responsible for the core recommendation and explanation.
+// The AI is now only responsible for the core numeric recommendations.
 const OptimizeCementProductionOutputSchema = z.object({
   recommendationId: z.string().describe('A unique ID for the recommendation, e.g., "REC-20240521-001".'),
   feedRateSetpoint: z.number().describe('The recommended feed rate setpoint in tons per hour.'),
   limestoneAdjustment: z.string().describe('Recommended adjustment to the limestone feed (source of CaO), e.g., "+2%" or "-1.5%".'),
   clayAdjustment: z.string().describe('Recommended adjustment to the clay/shale feed (source of SiO2/Al2O3), e.g., "-1%" or "+0.5%".'),
-  explanation: z.string().describe('A clear, concise explanation of why this recommendation is being made, referencing the input data and constraints. Explain the trade-offs involved, particularly how adjustments to the raw mix will affect the LSF.'),
 });
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
 
@@ -43,7 +42,7 @@ const prompt = ai.definePrompt({
     name: 'optimizeCementProductionPrompt',
     input: {schema: OptimizeCementProductionInputSchema},
     output: {schema: OptimizeCementProductionOutputSchema},
-    prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide an optimal operational recommendation based on real-time chemical and physical data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
+    prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide optimal operational setpoints based on real-time chemical and physical data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
 
     Current Plant State (Plant ID: {{{plantId}}}):
     - Kiln Temperature: {{{kilnTemperature}}} °C
@@ -64,9 +63,7 @@ const prompt = ai.definePrompt({
 
     Generate a unique ID for this recommendation.
     
-    Provide a detailed, data-driven explanation for your recommendation. The explanation must be thorough, discussing how the changes in raw mix will influence the LSF and clinker quality.
-    
-    Output a single JSON object adhering to the specified output schema. Do NOT calculate the predicted LSF or timestamp.
+    ONLY output the JSON object with the recommendation ID, feed rate, and adjustments. Do NOT provide an explanation.
     `,
   });
   
