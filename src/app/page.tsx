@@ -16,51 +16,42 @@ import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
+import { useDocument } from 'react-firebase-hooks/firestore';
+import { doc, getFirestore } from 'firebase/firestore';
+import { app } from '@/firebase/client';
 
 export default function DashboardPage() {
-  const [metricsData, setMetricsData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [liveMetrics, loading, error] = useDocument(doc(getFirestore(app), 'plant-metrics', 'live'));
 
   useEffect(() => {
-    const fetchLiveMetrics = async () => {
-      try {
-        const response = await fetch('/api/metrics/live');
-        if (response.ok) {
-          const data = await response.json();
-          setMetricsData(data);
-          // Only set loading to false after we have successfully fetched data
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch live metrics:', error);
-      }
-    };
-
+    // This function calls the API to generate a new data point
     const ingestData = () => {
         fetch('/api/ingest', { method: 'POST' });
     }
 
-    // Immediately trigger the first fetch for live metrics and data ingestion
+    // Immediately trigger the first ingestion
     ingestData();
-    fetchLiveMetrics();
     
-    // Set up intervals for subsequent updates
-    const dataFetchInterval = setInterval(fetchLiveMetrics, 5000);
+    // Set up an interval to continue ingesting data every 5 seconds
     const dataIngestInterval = setInterval(ingestData, 5000);
 
-    // Clean up intervals on component unmount
+    // Clean up interval on component unmount
     return () => {
       clearInterval(dataIngestInterval);
-      clearInterval(dataFetchInterval);
     };
   }, []); 
 
+  if (error) {
+    console.error("Error fetching live metrics:", error);
+  }
+
+  const metricsData = liveMetrics?.data();
   const chartData = historicalTemperatureData;
 
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-            {loading ? (
+            {loading || !metricsData ? (
                 <>
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
@@ -117,7 +108,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {loading ? (
+                {loading || !metricsData ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
                     <QualityScoreGauge value={metricsData?.clinker_quality_score || 0} />
