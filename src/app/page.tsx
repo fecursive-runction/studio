@@ -11,12 +11,11 @@ import {
   FlaskConical,
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
-import { historicalTemperatureData } from '@/lib/data';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-import { getLiveMetrics, getAiAlerts } from '@/app/actions';
+import { getLiveMetrics, getAiAlerts, getMetricsHistory } from '@/app/actions';
 
 
 type MetricsData = {
@@ -37,10 +36,16 @@ type Alert = {
     icon: 'AlertTriangle' | 'Info' | 'ShieldCheck';
 };
 
+type ChartDataPoint = {
+  time: string;
+  temperature: number;
+};
+
 
 export default function DashboardPage() {
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Set up the interval to trigger data ingestion (but not fetching)
@@ -57,15 +62,15 @@ export default function DashboardPage() {
   }, []);
 
 
-  // Fetch data once on component mount
+  // Set up an interval to fetch fresh data for the dashboard
   useEffect(() => {
     const fetchAndSetData = async () => {
-        setLoading(true);
         try {
-            // Fetch metrics and alerts in parallel to speed up loading
-            const [data, aiAlerts] = await Promise.all([
+            // Fetch metrics, alerts, and chart data in parallel
+            const [data, aiAlerts, history] = await Promise.all([
                 getLiveMetrics(),
                 getAiAlerts(),
+                getMetricsHistory(), // Fetch history for the chart
             ]);
 
             if (data) {
@@ -74,17 +79,29 @@ export default function DashboardPage() {
             if (aiAlerts) {
                 setAlerts(aiAlerts);
             }
+            if (history) {
+                // Transform history data for the temperature chart
+                const transformedChartData = history
+                    .map((metric: any) => ({
+                        time: new Date(metric.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        temperature: metric.kiln_temp,
+                    }))
+                    .reverse(); // Reverse to show oldest data first
+                setChartData(transformedChartData);
+            }
         } catch(e) {
-            console.error("Failed to fetch metrics or alerts", e);
+            console.error("Failed to fetch dashboard data", e);
         } finally {
-            setLoading(false);
+            if (loading) setLoading(false);
         }
     };
-    fetchAndSetData();
-  }, []);
+    
+    fetchAndSetData(); // Fetch immediately on mount
+    const interval = setInterval(fetchAndSetData, 5000); // Poll every 5 seconds
 
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, [loading]);
 
-  const chartData = historicalTemperatureData;
 
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -130,11 +147,15 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LineChart className="h-5 w-5 text-muted-foreground" />
-                Kiln Temperature (Last 24h)
+                Kiln Temperature (Live)
               </CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
+              {loading ? (
+                <Skeleton className="h-[350px]" />
+              ) : (
                 <TemperatureChart data={chartData} />
+              )}
             </CardContent>
           </Card>
           <div className="grid gap-4 lg:col-span-3 lg:grid-cols-1">

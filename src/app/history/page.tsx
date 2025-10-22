@@ -68,7 +68,7 @@ export default async function HistoryPage() {
                   {metricsHistory.map((metric: any) => (
                     <TableRow key={metric.id}>
                       <TableCell className="font-mono text-xs">
-                        {new Date(metric.timestamp).toLocaleTimeString()}
+                        {new Date(metric.timestamp).toLocaleString()}
                       </TableCell>
                       <TableCell>
                         {formatNumber(metric.kiln_temp, { decimals: 1 })}°C
