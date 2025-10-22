@@ -23,6 +23,19 @@ import { app } from '@/firebase/client';
 export default function DashboardPage() {
   const [liveMetrics, loading, error] = useDocument(doc(getFirestore(app), 'plant-metrics', 'live'));
 
+  // Periodically call the ingest endpoint to simulate live data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch('/api/ingest', { method: 'POST' });
+    }, 5000); // every 5 seconds
+
+    // Initial fetch
+    fetch('/api/ingest', { method: 'POST' });
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   const metricsData = liveMetrics?.data();
 
   const chartData = historicalTemperatureData.map((d, i) => i % 36 === 0 ? d : ({...d, time: ''}));
@@ -30,7 +43,7 @@ export default function DashboardPage() {
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-            {loading ? (
+            {loading || !metricsData ? (
                 <>
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
@@ -91,7 +104,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {loading ? (
+                {loading || !metricsData ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
                     <QualityScoreGauge value={metricsData?.clinker_quality_score || 0} />
