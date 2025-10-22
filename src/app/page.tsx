@@ -41,9 +41,8 @@ type MetricsData = {
 type Alert = {
     id: string;
     timestamp: Date;
-    severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'RESOLVED';
+    severity: 'CRITICAL' | 'WARNING' | 'INFO';
     message: string;
-    icon: 'AlertTriangle' | 'Info' | 'ShieldCheck';
 };
 
 type ChartDataPoint = {
@@ -131,7 +130,7 @@ export default function DashboardPage() {
     };
     
     fetchAndSetData(); // Fetch immediately on mount
-    const interval = setInterval(fetchAndSetData, 60000); // Poll every 60 seconds
+    const interval = setInterval(fetchAndSetData, 5000); // Poll every 5 seconds for fresh data
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, [loading]);
@@ -255,5 +254,3 @@ export default function DashboardPage() {
       </main>
   );
 }
-
-    
