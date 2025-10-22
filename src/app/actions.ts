@@ -1,7 +1,6 @@
 'use server';
 
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
-import { generateExplanation } from '@/ai/flows/generate-explanation';
 import { generateAlerts } from '@/ai/flows/generate-alerts';
 import { z } from 'zod';
 import { getDb } from '@/lib/db';
@@ -84,25 +83,6 @@ const optimizationSchema = z.object({
   fe2o3: z.string(),
 });
 
-/**
- * Calculates a simplified predicted LSF based on adjustments.
- * This is a proxy for a real chemical engineering model.
- */
-function calculatePredictedLsf(currentLsf: number, limestoneAdj: string, clayAdj: string): number {
-    let predictedLsf = currentLsf;
-    const limestoneChange = parseFloat(limestoneAdj.replace('%', '')) || 0;
-    const clayChange = parseFloat(clayAdj.replace('%', '')) || 0;
-
-    // Limestone (CaO) has a strong positive effect on LSF.
-    predictedLsf += limestoneChange * 1.5;
-
-    // Clay (SiO2/Al2O3) has a negative effect on LSF.
-    predictedLsf -= clayChange * 0.5;
-
-    // Ensure the value is within a reasonable range
-    return Math.max(85, Math.min(105, predictedLsf));
-}
-
 
 export async function runOptimization(prevState: any, formData: FormData) {
   const validatedFields = optimizationSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -131,33 +111,12 @@ export async function runOptimization(prevState: any, formData: FormData) {
 
 
   try {
-    // 1. Get core recommendation (fast)
-    const aiCoreRecommendation = await optimizeCementProduction(currentMetrics);
+    // Single, consolidated call to the AI flow
+    const aiRecommendation = await optimizeCementProduction(currentMetrics);
 
-
-    // 2. Calculate predicted LSF in code
-    const predictedLSF = calculatePredictedLsf(currentMetrics.lsf, aiCoreRecommendation.limestoneAdjustment, aiCoreRecommendation.clayAdjustment);
-    
-    // 3. Prepare input for the explanation flow
-    const explanationInput = {
-        kilnTemperature: currentMetrics.kilnTemperature,
-        feedRate: currentMetrics.feedRate,
-        lsf: currentMetrics.lsf,
-        limestoneAdjustment: aiCoreRecommendation.limestoneAdjustment,
-        clayAdjustment: aiCoreRecommendation.clayAdjustment,
-        predictedLSF: predictedLSF,
-    };
-
-    // 4. Get explanation (slower, but happens after core results are known)
-    const explanation = await generateExplanation(explanationInput);
-
-
-    // 5. Combine results
     const finalRecommendation = {
-        ...aiCoreRecommendation,
-        predictedLSF: predictedLSF,
+        ...aiRecommendation,
         timestamp: new Date().toISOString(),
-        explanation,
     };
     
     return {
@@ -270,5 +229,3 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
-
-    

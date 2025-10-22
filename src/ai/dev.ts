@@ -5,4 +5,3 @@ config();
 
 import '@/ai/flows/optimize-cement-production.ts';
 import '@/ai/flows/generate-alerts.ts';
-import '@/ai/flows/generate-explanation.ts';

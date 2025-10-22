@@ -254,5 +254,3 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
     </div>
   );
 }
-
-    

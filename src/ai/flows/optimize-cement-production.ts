@@ -24,12 +24,14 @@ const OptimizeCementProductionInputSchema = z.object({
 });
 export type OptimizeCementProductionInput = z.infer<typeof OptimizeCementProductionInputSchema>;
 
-// The AI is now only responsible for the core numeric recommendations.
+// The AI is now responsible for the core numeric recommendations AND the explanation.
 const OptimizeCementProductionOutputSchema = z.object({
   recommendationId: z.string().describe('A unique ID for the recommendation, e.g., "REC-20240521-001".'),
-  feedRateSetpoint: z.number().describe('The recommended feed rate setpoint in tons per hour.'),
-  limestoneAdjustment: z.string().describe('Recommended adjustment to the limestone feed (source of CaO), e.g., "+2%" or "-1.5%".'),
-  clayAdjustment: z.string().describe('Recommended adjustment to the clay/shale feed (source of SiO2/Al2O3), e.g., "-1%" or "+0.5%".'),
+  feedRateSetpoint: z.number().describe('A number representing the recommended feed rate setpoint in tons per hour.'),
+  limestoneAdjustment: z.string().describe('Recommended adjustment to the limestone feed (source of CaO), as a string e.g., "+2%" or "-1.5%".'),
+  clayAdjustment: z.string().describe('Recommended adjustment to the clay/shale feed (source of SiO2/Al2O3), as a string e.g., "-1%" or "+0.5%".'),
+  predictedLSF: z.number().describe('The predicted LSF after the adjustments are made. This should be a number.'),
+  explanation: z.string().describe('A clear, concise explanation for the recommendation. Explain the trade-offs involved, particularly how adjustments to the raw mix (limestone for CaO, clay for SiO2/Al2O3) affect the LSF to bring it into the ideal range of 94-98%.'),
 });
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
 
@@ -42,7 +44,7 @@ const prompt = ai.definePrompt({
     name: 'optimizeCementProductionPrompt',
     input: {schema: OptimizeCementProductionInputSchema},
     output: {schema: OptimizeCementProductionOutputSchema},
-    prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide optimal operational setpoints based on real-time chemical and physical data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
+    prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide optimal operational setpoints AND an explanation based on real-time data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
 
     Current Plant State (Plant ID: {{{plantId}}}):
     - Kiln Temperature: {{{kilnTemperature}}} °C
@@ -59,17 +61,15 @@ const prompt = ai.definePrompt({
     - {{{this}}}
     {{/each}}
 
-    Your goal is to recommend adjustments to the raw material feed to correct the LSF. Limestone is the primary source of CaO. Clay/shale is the primary source of SiO2 and Al2O3. Recommend a percentage change for the limestone and clay feeders to achieve an LSF between 94% and 98%. Also recommend a new overall feed rate setpoint.
-
-    Generate a unique ID for this recommendation.
+    Your tasks:
+    1.  Recommend adjustments to the raw material feed (limestone and clay/shale) to correct the LSF. Limestone is the primary source of CaO. Clay/shale is the primary source of SiO2 and Al2O3.
+    2.  Recommend a new overall feed rate setpoint.
+    3.  Calculate the predicted LSF that would result from your recommended adjustments.
+    4.  Generate a clear explanation of why these changes are recommended, explaining the trade-offs involved in adjusting the raw mix to achieve the target LSF.
     
-    ONLY output a valid JSON object matching the output schema.
-    - recommendationId: A unique string ID.
-    - feedRateSetpoint: A number representing the recommended feed rate.
-    - limestoneAdjustment: A string representing the percentage change, e.g., "+1.2%".
-    - clayAdjustment: A string representing the percentage change, e.g., "-0.8%".
+    Generate a unique ID for this recommendation.
 
-    Do NOT provide an explanation or any other text outside the JSON object.
+    ONLY output a valid JSON object matching the output schema. Ensure all numeric fields are actual numbers, not strings.
     `,
   });
   
@@ -84,7 +84,3 @@ const prompt = ai.definePrompt({
       return output!;
     }
   );
-
-    
-
-
