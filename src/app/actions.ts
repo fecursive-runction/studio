@@ -90,11 +90,15 @@ export async function runOptimization(prevState: any, formData: FormData) {
   }
   
   try {
-    // 1. Get fresh, reliable data directly from the database.
+    // 1. Get fresh, reliable data directly from the database. This is the robust way.
     const liveMetrics = await getLiveMetrics();
     
     // 2. Prepare the data for the AI.
     const { constraints } = validatedFields.data;
+    const constraintsList = (constraints && constraints.trim()) 
+      ? constraints.split(',').map(c => c.trim()) 
+      : ["TARGET_LSF_94_98"]; // Default constraint if none provided
+
     const aiInput = {
       plantId: "poc_plant_01",
       kilnTemperature: liveMetrics.kilnTemperature,
@@ -104,7 +108,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
       sio2: liveMetrics.sio2,
       al2o3: liveMetrics.al2o3,
       fe2o3: liveMetrics.fe2o3,
-      constraints: (constraints && constraints.trim().length > 0) ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
+      constraints: constraintsList,
     };
 
     // 3. Make a single, consolidated call to the AI flow
@@ -225,4 +229,3 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
-    
