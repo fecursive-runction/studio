@@ -14,10 +14,12 @@ import { Bell, AlertTriangle, Info, ShieldCheck } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 
+// Map severity to an icon component
 const iconMap = {
-  AlertTriangle,
-  Info,
-  ShieldCheck,
+  CRITICAL: AlertTriangle,
+  WARNING: AlertTriangle,
+  INFO: Info,
+  RESOLVED: ShieldCheck, // Kept for potential future use
 };
 
 type Alert = {
@@ -25,7 +27,6 @@ type Alert = {
   timestamp: Date;
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'RESOLVED';
   message: string;
-  icon: keyof typeof iconMap;
 };
 
 type AlertFeedProps = {
@@ -55,7 +56,8 @@ export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
   }, []);
 
   const AlertItem = ({ alert }: { alert: Alert }) => {
-    const Icon = iconMap[alert.icon];
+    // Determine the icon based on severity, with a fallback
+    const Icon = iconMap[alert.severity] || Info;
     const isActionable = (alert.severity === 'CRITICAL' || alert.severity === 'WARNING') && liveMetrics;
 
     const content = (
