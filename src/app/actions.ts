@@ -1,3 +1,4 @@
+
 'use server';
 
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
@@ -158,7 +159,6 @@ export async function getAiAlerts() {
             timestamp: new Date(),
             severity: 'WARNING',
             message: 'Could not retrieve AI-powered alerts.',
-            icon: 'AlertTriangle',
         }];
     }
 }
@@ -201,7 +201,7 @@ export async function applyOptimization(prevState: any, formData: FormData) {
     const newFeedRate = parseFloat(formData.get('feedRateSetpoint') as string);
     const newKilnTemp = currentMetrics.kilnTemperature + (lsf > 98 ? -5 : (lsf < 94 ? 5 : 0)); // small adjustment
 
-    const boguePhases = calculateBogue(newCao, newSio2, newAl2o3, currentMetrics.fe2o3);
+    const boguePhases = calculateBogue(newCao, newSio2, currentMetrics.fe2o3, currentMetrics.fe2o3);
 
     const newMetric = {
         timestamp: new Date().toISOString(),
