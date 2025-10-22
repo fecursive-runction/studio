@@ -128,7 +128,7 @@ export async function getAiAlerts() {
             lsf: liveMetrics.lsf,
         });
 
-        if (!alertResponse || !alertResponse.alerts) {
+        if (!alertResponse || !alertResponse.alerts || alertResponse.alerts.length === 0) {
             return [];
         }
 
@@ -168,8 +168,7 @@ export async function applyOptimization(prevState: any, formData: FormData) {
     const newKilnTemp = currentMetrics.kilnTemperature + (lsf > 98 ? -5 : (lsf < 94 ? 5 : 0));
 
     try {
-        await db.run(
-            'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        const newMetricRecord = [
             new Date().toISOString(),
             'poc_plant_01',
             parseFloat(newKilnTemp.toFixed(2)),
@@ -179,6 +178,10 @@ export async function applyOptimization(prevState: any, formData: FormData) {
             parseFloat(newSio2.toFixed(2)),
             parseFloat(newAl2o3.toFixed(2)),
             parseFloat(currentMetrics.fe2o3.toFixed(2))
+        ];
+        await db.run(
+            'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            ...newMetricRecord
         );
         return { success: true, message: 'Optimization applied successfully!' };
     } catch (error: any) {
