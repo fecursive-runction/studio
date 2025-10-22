@@ -1,6 +1,7 @@
 'use server';
 
 import { queryPlantDataWithNaturalLanguage } from '@/ai/flows/query-plant-data-with-natural-language';
+import { summarizeQueryResults } from '@/ai/flows/summarize-query-results';
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
 import { executeBigQuery } from '@/services/bigquery';
 import { z } from 'zod';
@@ -30,7 +31,6 @@ export async function runQuery(prevState: any, formData: FormData) {
     const sqlResponse = await queryPlantDataWithNaturalLanguage({
       question,
       plantId: 'poc_plant_01',
-      state: 'generate_sql'
     });
 
     if (!sqlResponse.sql) {
@@ -40,11 +40,9 @@ export async function runQuery(prevState: any, formData: FormData) {
     // Step 2: Execute the generated SQL against BigQuery.
     const results = await executeBigQuery(sqlResponse.sql);
 
-    // Step 3: Pass the real results back to the AI to get a summary.
-    const summaryResponse = await queryPlantDataWithNaturalLanguage({
+    // Step 3: Pass the real results back to a new, dedicated AI flow to get a summary.
+    const summaryResponse = await summarizeQueryResults({
         question,
-        plantId: 'poc_plant_01',
-        state: 'summarize_results',
         results,
     });
     
