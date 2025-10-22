@@ -28,33 +28,31 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json();
           setMetricsData(data);
-          // Only set loading to false after we have data
-          if (loading) {
-            setLoading(false);
-          }
+          // Only set loading to false after we have successfully fetched data
+          setLoading(false);
         }
       } catch (error) {
         console.error('Failed to fetch live metrics:', error);
       }
     };
 
+    const ingestData = () => {
+        fetch('/api/ingest', { method: 'POST' });
+    }
+
     // Immediately trigger the first fetch for live metrics and data ingestion
+    ingestData();
     fetchLiveMetrics();
-    fetch('/api/ingest', { method: 'POST' });
     
     // Set up intervals for subsequent updates
     const dataFetchInterval = setInterval(fetchLiveMetrics, 5000);
-    const dataIngestInterval = setInterval(() => {
-      fetch('/api/ingest', { method: 'POST' });
-    }, 5000);
+    const dataIngestInterval = setInterval(ingestData, 5000);
 
     // Clean up intervals on component unmount
     return () => {
       clearInterval(dataIngestInterval);
       clearInterval(dataFetchInterval);
     };
-    // The dependency array ensures this setup runs only once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
   const chartData = historicalTemperatureData;
