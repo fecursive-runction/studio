@@ -16,23 +16,42 @@ import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-import { useDocument } from 'react-firebase-hooks/firestore';
-import { doc, getFirestore } from 'firebase/firestore';
+import { doc, getFirestore, onSnapshot, DocumentData } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 
 export default function DashboardPage() {
-  const [liveMetrics, loading, error] = useDocument(doc(getFirestore(app), 'plant-metrics', 'live'));
+  const [metricsData, setMetricsData] = useState<DocumentData | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // Set up the real-time listener for live metrics
   useEffect(() => {
-    // This function calls the API to generate a new data point
+    const db = getFirestore(app);
+    const docRef = doc(db, 'plant-metrics', 'live');
+
+    const unsubscribe = onSnapshot(docRef, (doc) => {
+      if (doc.exists()) {
+        setMetricsData(doc.data());
+      } else {
+        console.log("No live metric document found!");
+      }
+      // Stop showing skeletons once we get the first response, even if it's empty
+      setLoading(false); 
+    }, (error) => {
+      console.error("Firestore snapshot error:", error);
+      setLoading(false); // Stop loading on error as well
+    });
+
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, []);
+
+  // Set up the interval to trigger data ingestion
+  useEffect(() => {
     const ingestData = () => {
         fetch('/api/ingest', { method: 'POST' });
     }
-
     // Immediately trigger the first ingestion
     ingestData();
-    
-    // Set up an interval to continue ingesting data every 5 seconds
     const dataIngestInterval = setInterval(ingestData, 5000);
 
     // Clean up interval on component unmount
@@ -41,11 +60,7 @@ export default function DashboardPage() {
     };
   }, []); 
 
-  if (error) {
-    console.error("Error fetching live metrics:", error);
-  }
 
-  const metricsData = liveMetrics?.data();
   const chartData = historicalTemperatureData;
 
   return (
