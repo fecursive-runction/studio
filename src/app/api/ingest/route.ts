@@ -1,13 +1,27 @@
 
 import { NextResponse } from 'next/server';
-import { Firestore } from '@google-cloud/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+
+const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const firestore = getFirestore(app);
+
 
 // Function to generate a random number within a range
 const getRandom = (min: number, max: number, decimals: number = 2) => {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
 };
 
-const firestore = new Firestore();
 
 /**
  * API route handler for ingesting data.
@@ -28,8 +42,8 @@ export async function POST(req: Request) {
 
     // Save the new metric to a specific document in Firestore for live data
     // This overwrites the previous live metric with the new one.
-    const docRef = firestore.collection('plant-metrics').doc('live');
-    await docRef.set(newMetric);
+    const docRef = doc(firestore, 'plant-metrics', 'live');
+    await setDoc(docRef, newMetric);
 
     console.log('Ingested new live metric:', newMetric);
 
