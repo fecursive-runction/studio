@@ -20,10 +20,10 @@ import { getLiveMetrics } from '@/app/actions';
 
 
 type MetricsData = {
-    kiln_temp?: number;
-    feed_rate?: number;
-    energy_kwh_per_ton?: number;
-    clinker_quality_score?: number;
+    kilnTemperature?: number;
+    feedRate?: number;
+    energyConsumption?: number;
+    clinkerQualityScore?: number;
 };
 
 export default function DashboardPage() {
@@ -41,16 +41,17 @@ export default function DashboardPage() {
     const fetchAndSetMetrics = async () => {
         try {
             const data = await getLiveMetrics();
-            setMetricsData({
-                kiln_temp: data.kilnTemperature,
-                feed_rate: data.feedRate,
-                energy_kwh_per_ton: data.energyConsumption,
-                clinker_quality_score: data.clinkerQualityScore,
-            });
+            if (data) {
+                setMetricsData({
+                    kilnTemperature: data.kilnTemperature,
+                    feedRate: data.feedRate,
+                    energyConsumption: data.energyConsumption,
+                    clinkerQualityScore: data.clinkerQualityScore,
+                });
+            }
         } catch(e) {
             console.error("Failed to fetch metrics", e);
         } finally {
-            // Stop showing skeletons once we have tried fetching, even if it fails
             if (loading) {
                 setLoading(false);
             }
@@ -93,25 +94,25 @@ export default function DashboardPage() {
                 <>
                     <MetricCard
                         title="Kiln Temperature"
-                        value={(metricsData?.kiln_temp || 0).toFixed(1)}
+                        value={(metricsData?.kilnTemperature || 0).toFixed(1)}
                         unit="°C"
                         icon="Thermometer"
                     />
                     <MetricCard
                         title="Feed Rate"
-                        value={(metricsData?.feed_rate || 0).toFixed(1)}
+                        value={(metricsData?.feedRate || 0).toFixed(1)}
                         unit="TPH"
                         icon="Gauge"
                     />
                     <MetricCard
                         title="Energy Consumption"
-                        value={(metricsData?.energy_kwh_per_ton || 0).toFixed(1)}
+                        value={(metricsData?.energyConsumption || 0).toFixed(1)}
                         unit="kWh/t"
                         icon="Zap"
                     />
                     <MetricCard
                         title="Clinker Quality"
-                        value={(metricsData?.clinker_quality_score || 0).toFixed(3)}
+                        value={(metricsData?.clinkerQualityScore || 0).toFixed(3)}
                         unit="Score"
                         icon="Award"
                     />
@@ -142,7 +143,7 @@ export default function DashboardPage() {
                 {loading || !metricsData ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
-                    <QualityScoreGauge value={metricsData?.clinker_quality_score || 0} />
+                    <QualityScoreGauge value={metricsData?.clinkerQualityScore || 0} />
                 )}
               </CardContent>
             </Card>
