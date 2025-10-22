@@ -36,30 +36,23 @@ const OptimizeCementProductionOutputSchema = z.object({
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
 
 export async function optimizeCementProduction(input: OptimizeCementProductionInput): Promise<OptimizeCementProductionOutput> {
-  return optimizeCementProductionFlow(input);
-}
-
-
-const prompt = ai.definePrompt({
-    name: 'optimizeCementProductionPrompt',
-    input: {schema: OptimizeCementProductionInputSchema},
-    output: {schema: OptimizeCementProductionOutputSchema},
+  const model = googleAI.model('gemini-1.5-pro-latest');
+  const { output } = await ai.generate({
+    model,
     prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide optimal operational setpoints AND an explanation based on real-time data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
 
-    Current Plant State (Plant ID: {{{plantId}}}):
-    - Kiln Temperature: {{{kilnTemperature}}} °C
-    - Raw Material Feed Rate: {{{feedRate}}} tons/hour
+    Current Plant State (Plant ID: ${input.plantId}):
+    - Kiln Temperature: ${input.kilnTemperature} °C
+    - Raw Material Feed Rate: ${input.feedRate} tons/hour
     - Raw Mix Composition:
-        - CaO: {{{cao}}}%
-        - SiO2: {{{sio2}}}%
-        - Al2O3: {{{al2o3}}}%
-        - Fe2O3: {{{fe2o3}}}%
-    - Current LSF: {{{lsf}}}%
+        - CaO: ${input.cao}%
+        - SiO2: ${input.sio2}%
+        - Al2O3: ${input.al2o3}%
+        - Fe2O3: ${input.fe2o3}%
+    - Current LSF: ${input.lsf}%
 
     Operational Constraints:
-    {{#each constraints}}
-    - {{{this}}}
-    {{/each}}
+    ${input.constraints.map(c => `- ${c}`).join('\n')}
 
     Your tasks:
     1.  Recommend adjustments to the raw material feed (limestone and clay/shale) to correct the LSF. Limestone is the primary source of CaO. Clay/shale is the primary source of SiO2 and Al2O3.
@@ -67,22 +60,21 @@ const prompt = ai.definePrompt({
     3.  Calculate the predicted LSF that would result from your recommended adjustments.
     4.  Generate a clear explanation of why these changes are recommended, explaining the trade-offs involved in adjusting the raw mix to achieve the target LSF.
     
-    Generate a unique ID for this recommendation.
+    Generate a unique ID for this recommendation (e.g., REC-YYYYMMDD-HHMMSS).
 
     ONLY output a valid JSON object matching the output schema. Ensure all numeric fields are actual numbers, not strings.
     `,
-  });
-  
-  const optimizeCementProductionFlow = ai.defineFlow(
-    {
-      name: 'optimizeCementProductionFlow',
-      inputSchema: OptimizeCementProductionInputSchema,
-      outputSchema: OptimizeCementProductionOutputSchema,
+    output: {
+      schema: OptimizeCementProductionOutputSchema,
     },
-    async input => {
-      const {output} = await prompt(input);
-      return output!;
+    config: {
+        temperature: 0.2,
     }
-  );
+  });
 
-    
+  if (!output) {
+    throw new Error('AI failed to generate a recommendation.');
+  }
+
+  return output;
+}

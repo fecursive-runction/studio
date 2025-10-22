@@ -56,7 +56,15 @@ export async function POST(req: Request) {
     // Insert the new metric into the database
     await db.run(
         'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ...Object.values(newMetric)
+        newMetric.timestamp,
+        newMetric.plant_id,
+        newMetric.kiln_temp,
+        newMetric.feed_rate,
+        newMetric.lsf,
+        newMetric.cao,
+        newMetric.sio2,
+        newMetric.al2o3,
+        newMetric.fe2o3
     );
 
     console.log('Ingested new live metric into SQLite:', newMetric);

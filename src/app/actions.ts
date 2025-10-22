@@ -1,7 +1,7 @@
 
 'use server';
 
-import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
+import { optimizeCementProduction, type OptimizeCementProductionInput } from '@/ai/flows/optimize-cement-production';
 import { generateAlerts } from '@/ai/flows/generate-alerts';
 import { z } from 'zod';
 import { getDb } from '@/lib/db';
@@ -86,7 +86,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
       ? constraints.split(',').map(c => c.trim()) 
       : ["TARGET_LSF_94_98"];
 
-    const aiInput = {
+    const aiInput: OptimizeCementProductionInput = {
       plantId: "poc_plant_01",
       kilnTemperature: liveMetrics.kilnTemperature,
       feedRate: liveMetrics.feedRate,
@@ -125,7 +125,6 @@ export async function getAiAlerts() {
         const liveMetrics = await getLiveMetrics();
         const alertResponse = await generateAlerts({
             kilnTemperature: liveMetrics.kilnTemperature,
-            feedRate: liveMetrics.feedRate,
             lsf: liveMetrics.lsf,
         });
 
@@ -133,6 +132,7 @@ export async function getAiAlerts() {
             return [];
         }
 
+        // Programmatically add a unique ID and timestamp to each alert
         return alertResponse.alerts.map((alert, index) => ({
             ...alert,
             id: `alert-${Date.now()}-${index}`,
@@ -141,8 +141,9 @@ export async function getAiAlerts() {
 
     } catch (e: any) {
         console.error("Failed to get AI alerts:", e);
+        // On failure, return an array with a single, clear error alert
         return [{
-            id: 'err-alert',
+            id: 'err-alert-static',
             timestamp: new Date(),
             severity: 'WARNING',
             message: 'Could not retrieve AI-powered alerts.',
@@ -166,22 +167,18 @@ export async function applyOptimization(prevState: any, formData: FormData) {
     const newFeedRate = parseFloat(formData.get('feedRateSetpoint') as string);
     const newKilnTemp = currentMetrics.kilnTemperature + (lsf > 98 ? -5 : (lsf < 94 ? 5 : 0));
 
-    const newMetric = {
-        timestamp: new Date().toISOString(),
-        plant_id: 'poc_plant_01',
-        kiln_temp: parseFloat(newKilnTemp.toFixed(2)),
-        feed_rate: parseFloat(newFeedRate.toFixed(2)),
-        lsf: parseFloat(lsf.toFixed(1)),
-        cao: parseFloat(newCao.toFixed(2)),
-        sio2: parseFloat(newSio2.toFixed(2)),
-        al2o3: parseFloat(newAl2o3.toFixed(2)),
-        fe2o3: parseFloat(currentMetrics.fe2o3.toFixed(2)),
-    };
-    
     try {
         await db.run(
             'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ...Object.values(newMetric)
+            new Date().toISOString(),
+            'poc_plant_01',
+            parseFloat(newKilnTemp.toFixed(2)),
+            parseFloat(newFeedRate.toFixed(2)),
+            parseFloat(lsf.toFixed(1)),
+            parseFloat(newCao.toFixed(2)),
+            parseFloat(newSio2.toFixed(2)),
+            parseFloat(newAl2o3.toFixed(2)),
+            parseFloat(currentMetrics.fe2o3.toFixed(2))
         );
         return { success: true, message: 'Optimization applied successfully!' };
     } catch (error: any) {
