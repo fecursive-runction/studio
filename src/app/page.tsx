@@ -9,6 +9,8 @@ import { MetricCard } from '@/components/dashboard/metric-card';
 import {
   LineChart,
   FlaskConical,
+  Beaker,
+  Component
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
@@ -26,6 +28,10 @@ type MetricsData = {
     sio2: number;
     al2o3: number;
     fe2o3: number;
+    c3s: number;
+    c2s: number;
+    c3a: number;
+    c4af: number;
 };
 
 type Alert = {
@@ -131,12 +137,7 @@ export default function DashboardPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
             {loading || !metricsData ? (
-                <>
-                    <Skeleton className="h-32" />
-                    <Skeleton className="h-32" />
-                    <Skeleton className="h-32" />
-                    <Skeleton className="h-32" />
-                </>
+                Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-32" />)
             ) : (
                 <>
                     <MetricCard
@@ -162,6 +163,34 @@ export default function DashboardPage() {
                         value={(metricsData.cao || 0).toFixed(2)}
                         unit="%"
                         icon="FlaskConical"
+                    />
+                    <MetricCard
+                        title="C₃S (Alite)"
+                        value={(metricsData.c3s || 0).toFixed(1)}
+                        unit="%"
+                        icon="Component"
+                        description="Strength dev."
+                    />
+                    <MetricCard
+                        title="C₂S (Belite)"
+                        value={(metricsData.c2s || 0).toFixed(1)}
+                        unit="%"
+                        icon="Component"
+                        description="Late strength"
+                    />
+                    <MetricCard
+                        title="C₃A"
+                        value={(metricsData.c3a || 0).toFixed(1)}
+                        unit="%"
+                        icon="Beaker"
+                        description="Early strength"
+                    />
+                    <MetricCard
+                        title="C₄AF"
+                        value={(metricsData.c4af || 0).toFixed(1)}
+                        unit="%"
+                        icon="Beaker"
+                        description="Flux agent"
                     />
                 </>
             )}

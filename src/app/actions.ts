@@ -22,6 +22,10 @@ export async function getLiveMetrics() {
                 sio2: 14,
                 al2o3: 3.5,
                 fe2o3: 2.5,
+                c3s: 55,
+                c2s: 20,
+                c3a: 9,
+                c4af: 10,
             };
         }
 
@@ -33,6 +37,10 @@ export async function getLiveMetrics() {
             sio2: latestMetric.sio2,
             al2o3: latestMetric.al2o3,
             fe2o3: latestMetric.fe2o3,
+            c3s: latestMetric.c3s,
+            c2s: latestMetric.c2s,
+            c3a: latestMetric.c3a,
+            c4af: latestMetric.c4af,
         };
     } catch (e: any) {
         console.error("Failed to get live metrics from SQLite:", e);
@@ -45,6 +53,10 @@ export async function getLiveMetrics() {
             sio2: 14,
             al2o3: 3.5,
             fe2o3: 2.5,
+            c3s: 55,
+            c2s: 20,
+            c3a: 9,
+            c4af: 10,
         };
     }
 }

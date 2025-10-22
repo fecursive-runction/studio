@@ -5,9 +5,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Thermometer, Gauge, Zap, Award, FlaskConical } from 'lucide-react';
+import { Thermometer, Gauge, Zap, Award, FlaskConical, Beaker, Component } from 'lucide-react';
 import React from 'react';
 
 const iconMap = {
@@ -16,6 +17,8 @@ const iconMap = {
   Zap,
   Award,
   FlaskConical,
+  Beaker,
+  Component,
 };
 
 type MetricCardProps = {
@@ -23,7 +26,7 @@ type MetricCardProps = {
   value: string;
   unit: string;
   icon: keyof typeof iconMap;
-  trend?: number;
+  description?: string;
 };
 
 export function MetricCard({
@@ -31,6 +34,7 @@ export function MetricCard({
   value,
   unit,
   icon,
+  description
 }: MetricCardProps) {
 
   const Icon = iconMap[icon];
@@ -46,7 +50,7 @@ export function MetricCard({
           {value} <span className="text-base font-normal text-muted-foreground">{unit}</span>
         </div>
         <p className={'text-xs text-muted-foreground flex items-center'}>
-          Live data
+          {description || 'Live data'}
         </p>
       </CardContent>
     </Card>
