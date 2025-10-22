@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,14 +13,14 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, Zap, Award, Gauge, Lightbulb } from 'lucide-react';
+import { Bot, Zap, Award, Gauge, Lightbulb, Thermometer, TrendingDown, TrendingUp } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
-import { runOptimization } from '@/app/actions';
+import { runOptimization, getLiveMetrics } from '@/app/actions';
 import { Badge } from '../ui/badge';
 import { formatNumber } from '@/lib/utils';
-import { TrendingDown, TrendingUp } from 'lucide-react';
+
 
 const initialState = {
   recommendation: null,
@@ -86,14 +86,44 @@ function RecommendationDisplay({ recommendation }: { recommendation: any }) {
         </div>
       </div>
     );
-  }
-  
+}
 
-export function OptimizationPanel() {
+type Metrics = {
+    kilnTemperature?: number;
+    feedRate?: number;
+    energyConsumption?: number;
+    clinkerQualityScore?: number;
+}
+  
+export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics & { trigger?: boolean } }) {
   const [state, formAction] = useActionState(runOptimization, initialState);
   const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
+  const [metrics, setMetrics] = useState<Metrics | null>(initialMetrics.kilnTemperature ? initialMetrics : null);
+  
+  useEffect(() => {
+    async function loadInitialData() {
+        if (!initialMetrics.kilnTemperature) {
+            const liveMetrics = await getLiveMetrics();
+            setMetrics(liveMetrics);
+        }
+    }
+    loadInitialData();
+  }, [initialMetrics]);
+
+  useEffect(() => {
+    if (initialMetrics.trigger && formRef.current) {
+        // Use a timeout to allow the form to render before submitting
+        setTimeout(() => {
+            if (formRef.current) {
+                const submitButton = formRef.current.querySelector('button[type="submit"]') as HTMLButtonElement;
+                submitButton?.click();
+            }
+        }, 100);
+    }
+  }, [initialMetrics.trigger]);
+
 
   useEffect(() => {
     if (state.error) {
@@ -109,24 +139,37 @@ export function OptimizationPanel() {
   return (
     <div className="grid gap-8 md:grid-cols-3">
         <form ref={formRef} action={formAction} className="md:col-span-1">
+            <input type="hidden" name="kilnTemperature" value={metrics?.kilnTemperature} />
+            <input type="hidden" name="feedRate" value={metrics?.feedRate} />
+            <input type="hidden" name="energyConsumption" value={metrics?.energyConsumption} />
+            <input type="hidden" name="clinkerQualityScore" value={metrics?.clinkerQualityScore} />
+
             <Card>
                 <CardHeader>
-                    <CardTitle>Constraints</CardTitle>
+                    <CardTitle>Inputs</CardTitle>
                     <CardDescription>
-                    Define operational constraints for the AI.
+                    Live metrics from the plant. Add constraints to guide the AI.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    { !metrics ? <Skeleton className="h-24" /> : (
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                            <p className="flex justify-between"><span><Thermometer className="inline h-4 w-4 mr-1"/>Kiln Temp:</span> <span className="font-mono text-foreground">{formatNumber(metrics.kilnTemperature!)} °C</span></p>
+                            <p className="flex justify-between"><span><Gauge className="inline h-4 w-4 mr-1"/>Feed Rate:</span> <span className="font-mono text-foreground">{formatNumber(metrics.feedRate!)} TPH</span></p>
+                            <p className="flex justify-between"><span><Award className="inline h-4 w-4 mr-1"/>Quality Score:</span> <span className="font-mono text-foreground">{formatNumber(metrics.clinkerQualityScore!, {decimals: 3})}</span></p>
+                        </div>
+                    )}
+                    <Separator />
                     <div className="space-y-2">
-                    <Label htmlFor="constraints">Additional Constraints</Label>
-                    <Textarea
-                        id="constraints"
-                        name="constraints"
-                        placeholder="e.g., MAINTAIN_QUALITY_ABOVE_0.91, USE_ALT_FUEL_MIX"
-                        className="min-h-[100px]"
-                        disabled={pending}
-                    />
-                    <p className="text-xs text-muted-foreground">Separate constraints with a comma.</p>
+                        <Label htmlFor="constraints">Additional Constraints</Label>
+                        <Textarea
+                            id="constraints"
+                            name="constraints"
+                            placeholder="e.g., MAINTAIN_QUALITY_ABOVE_0.91, USE_ALT_FUEL_MIX"
+                            className="min-h-[100px]"
+                            disabled={pending}
+                        />
+                        <p className="text-xs text-muted-foreground">Separate constraints with a comma.</p>
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -148,7 +191,7 @@ export function OptimizationPanel() {
                 <div className="flex h-[240px] flex-col items-center justify-center rounded-lg border-2 border-dashed">
                     <Bot className="h-12 w-12 text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Your recommendation will appear here.
+                        { initialMetrics.trigger ? 'Generating recommendation...' : 'Your recommendation will appear here.'}
                     </p>
                 </div>
             )}

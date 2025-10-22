@@ -42,32 +42,39 @@ export async function getLiveMetrics() {
 
 const optimizationSchema = z.object({
   constraints: z.string().optional(),
+  kilnTemperature: z.string(),
+  feedRate: z.string(),
+  energyConsumption: z.string(),
+  clinkerQualityScore: z.string(),
 });
 
 export async function runOptimization(prevState: any, formData: FormData) {
   const validatedFields = optimizationSchema.safeParse({
     constraints: formData.get('constraints'),
+    kilnTemperature: formData.get('kilnTemperature'),
+    feedRate: formData.get('feedRate'),
+    energyConsumption: formData.get('energyConsumption'),
+    clinkerQualityScore: formData.get('clinkerQualityScore'),
   });
 
   if (!validatedFields.success) {
+    console.error(validatedFields.error.flatten().fieldErrors);
     return {
       ...prevState,
-      error: 'Invalid constraints submitted.',
+      error: 'Invalid data submitted for optimization.',
       recommendation: null,
     };
   }
-  const { constraints } = validatedFields.data;
+  const { constraints, ...metrics } = validatedFields.data;
 
   try {
-    const liveMetrics = await getLiveMetrics();
-
     const recommendation = await optimizeCementProduction({
         plantId: "poc_plant_01",
-        kilnTemperature: liveMetrics.kilnTemperature,
-        feedRate: liveMetrics.feedRate,
-        energyConsumption: liveMetrics.energyConsumption,
-        clinkerQualityScore: liveMetrics.clinkerQualityScore,
-        constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["DO_NOT_EXCEED_TEMP_1500", "MAINTAIN_QUALITY_ABOVE_0.90"],
+        kilnTemperature: Number(metrics.kilnTemperature),
+        feedRate: Number(metrics.feedRate),
+        energyConsumption: Number(metrics.energyConsumption),
+        clinkerQualityScore: Number(metrics.clinkerQualityScore),
+        constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["MAINTAIN_QUALITY_ABOVE_0.90"],
     });
     
     return {

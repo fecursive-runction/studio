@@ -1,6 +1,8 @@
+
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -11,7 +13,6 @@ import {
 import { Bell, AlertTriangle, Info, ShieldCheck } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-import type { LucideProps } from 'lucide-react';
 
 const iconMap = {
   AlertTriangle,
@@ -25,6 +26,11 @@ type Alert = {
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'RESOLVED';
   message: string;
   icon: keyof typeof iconMap;
+};
+
+type AlertFeedProps = {
+  alerts: Alert[];
+  liveMetrics: any;
 };
 
 const severityStyles = {
@@ -41,12 +47,58 @@ const severityIconStyles = {
     RESOLVED: 'text-green-500',
   };
 
-export function AlertFeed({ alerts }: { alerts: Alert[] }) {
+export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const AlertItem = ({ alert }: { alert: Alert }) => {
+    const Icon = iconMap[alert.icon];
+    const isActionable = (alert.severity === 'CRITICAL' || alert.severity === 'WARNING') && liveMetrics;
+
+    const content = (
+        <div className={cn("flex items-start gap-4 p-2 rounded-lg", isActionable ? "hover:bg-muted cursor-pointer" : "")}>
+          <div className={cn("mt-1 flex h-8 w-8 items-center justify-center rounded-full", severityIconStyles[alert.severity], 'bg-opacity-10')}>
+            <Icon className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium leading-none">
+                {alert.message}
+              </p>
+              <Badge
+                variant="outline"
+                className={cn('text-xs', severityStyles[alert.severity])}
+              >
+                {alert.severity}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isClient ? alert.timestamp.toLocaleTimeString() : ''}
+            </p>
+          </div>
+        </div>
+    );
+
+    if (isActionable) {
+        const query = new URLSearchParams({
+            kilnTemperature: liveMetrics.kilnTemperature,
+            feedRate: liveMetrics.feedRate,
+            energyConsumption: liveMetrics.energyConsumption,
+            clinkerQualityScore: liveMetrics.clinkerQualityScore,
+            trigger: 'true',
+        });
+      return (
+        <Link href={`/optimize?${query.toString()}`} className="block">
+          {content}
+        </Link>
+      );
+    }
+
+    return content;
+  };
 
   return (
     <Card>
@@ -55,36 +107,13 @@ export function AlertFeed({ alerts }: { alerts: Alert[] }) {
           <Bell className="h-5 w-5 text-muted-foreground" />
           Alert Feed
         </CardTitle>
-        <CardDescription>Live alerts from the plant floor.</CardDescription>
+        <CardDescription>Live alerts from the plant floor. Critical alerts are clickable.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {alerts.map((alert, index) => {
-            const Icon = iconMap[alert.icon];
-            return (
-              <div key={index} className="flex items-start gap-4">
-                <div className={cn("mt-1 flex h-8 w-8 items-center justify-center rounded-full", severityIconStyles[alert.severity], 'bg-opacity-10')}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium leading-none">
-                      {alert.message}
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className={cn('text-xs', severityStyles[alert.severity])}
-                    >
-                      {alert.severity}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {isClient ? alert.timestamp.toLocaleTimeString() : ''}
-                  </p>
-                </div>
-              </div>
-            );
-        })}
+        <div className="space-y-2">
+          {alerts.map((alert) => (
+              <AlertItem key={alert.id} alert={alert} />
+          ))}
         </div>
       </CardContent>
     </Card>

@@ -20,10 +20,10 @@ import { getLiveMetrics, getAiAlerts } from '@/app/actions';
 
 
 type MetricsData = {
-    kilnTemperature?: number;
-    feedRate?: number;
-    energyConsumption?: number;
-    clinkerQualityScore?: number;
+    kilnTemperature: number;
+    feedRate: number;
+    energyConsumption: number;
+    clinkerQualityScore: number;
 };
 
 type Alert = {
@@ -44,25 +44,24 @@ export default function DashboardPage() {
   useEffect(() => {
     // Function to ingest new data
     const ingestData = async () => {
-      await fetch('/api/ingest', { method: 'POST' });
+      try {
+        await fetch('/api/ingest', { method: 'POST' });
+      } catch (e) {
+        console.error("Failed to ingest data:", e);
+      }
     };
 
     // Function to fetch the latest data for the UI
-    const fetchAndSetMetrics = async () => {
+    const fetchAndSetData = async () => {
         try {
             const data = await getLiveMetrics();
-            const aiAlerts = await getAiAlerts();
-            
             if (data) {
-                setMetricsData({
-                    kilnTemperature: data.kilnTemperature,
-                    feedRate: data.feedRate,
-                    energyConsumption: data.energyConsumption,
-                    clinkerQualityScore: data.clinkerQualityScore,
-                });
-            }
-            if (aiAlerts) {
-                setAlerts(aiAlerts);
+                setMetricsData(data);
+                // Only fetch alerts if we have data to analyze
+                const aiAlerts = await getAiAlerts();
+                if (aiAlerts) {
+                    setAlerts(aiAlerts);
+                }
             }
 
         } catch(e) {
@@ -77,21 +76,21 @@ export default function DashboardPage() {
     // Run both immediately on mount
     const initialLoad = async () => {
         await ingestData();
-        await fetchAndSetMetrics();
+        await fetchAndSetData();
     }
     initialLoad();
 
     // Then run them on an interval
     const interval = setInterval(() => {
         ingestData();
-        fetchAndSetMetrics();
+        fetchAndSetData();
     }, 5000); // every 5 seconds
 
     // Clean up interval on component unmount
     return () => {
       clearInterval(interval);
     };
-  }, [loading]); // Depend on loading to ensure the finally block runs correctly once
+  }, []); // Only run on mount
 
 
   const chartData = historicalTemperatureData;
@@ -110,25 +109,25 @@ export default function DashboardPage() {
                 <>
                     <MetricCard
                         title="Kiln Temperature"
-                        value={(metricsData?.kilnTemperature || 0).toFixed(1)}
+                        value={(metricsData.kilnTemperature || 0).toFixed(1)}
                         unit="°C"
                         icon="Thermometer"
                     />
                     <MetricCard
                         title="Feed Rate"
-                        value={(metricsData?.feedRate || 0).toFixed(1)}
+                        value={(metricsData.feedRate || 0).toFixed(1)}
                         unit="TPH"
                         icon="Gauge"
                     />
                     <MetricCard
                         title="Energy Consumption"
-                        value={(metricsData?.energyConsumption || 0).toFixed(1)}
+                        value={(metricsData.energyConsumption || 0).toFixed(1)}
                         unit="kWh/t"
                         icon="Zap"
                     />
                     <MetricCard
                         title="Clinker Quality"
-                        value={(metricsData?.clinkerQualityScore || 0).toFixed(3)}
+                        value={(metricsData.clinkerQualityScore || 0).toFixed(3)}
                         unit="Score"
                         icon="Award"
                     />
@@ -159,11 +158,11 @@ export default function DashboardPage() {
                 {loading || !metricsData ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
-                    <QualityScoreGauge value={metricsData?.clinkerQualityScore || 0} />
+                    <QualityScoreGauge value={metricsData.clinkerQualityScore || 0} />
                 )}
               </CardContent>
             </Card>
-            <AlertFeed alerts={alerts} />
+            <AlertFeed alerts={alerts} liveMetrics={metricsData} />
           </div>
         </div>
       </main>
