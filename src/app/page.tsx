@@ -8,7 +8,7 @@ import {
 import { MetricCard } from '@/components/dashboard/metric-card';
 import {
   LineChart,
-  BarChart,
+  FlaskConical,
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
 import { historicalTemperatureData } from '@/lib/data';
@@ -22,8 +22,11 @@ import { getLiveMetrics, getAiAlerts } from '@/app/actions';
 type MetricsData = {
     kilnTemperature: number;
     feedRate: number;
-    energyConsumption: number;
-    clinkerQualityScore: number;
+    lsf: number;
+    cao: number;
+    sio2: number;
+    al2o3: number;
+    fe2o3: number;
 };
 
 type Alert = {
@@ -119,17 +122,17 @@ export default function DashboardPage() {
                         unit="TPH"
                         icon="Gauge"
                     />
-                    <MetricCard
-                        title="Energy Consumption"
-                        value={(metricsData.energyConsumption || 0).toFixed(1)}
-                        unit="kWh/t"
-                        icon="Zap"
+                     <MetricCard
+                        title="Lime Saturation (LSF)"
+                        value={(metricsData.lsf || 0).toFixed(1)}
+                        unit="%"
+                        icon="FlaskConical"
                     />
                     <MetricCard
-                        title="Clinker Quality"
-                        value={(metricsData.clinkerQualityScore || 0).toFixed(3)}
-                        unit="Score"
-                        icon="Award"
+                        title="CaO"
+                        value={(metricsData.cao || 0).toFixed(2)}
+                        unit="%"
+                        icon="FlaskConical"
                     />
                 </>
             )}
@@ -150,15 +153,15 @@ export default function DashboardPage() {
             <Card className="lg:col-span-1">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart className="h-5 w-5 text-muted-foreground" />
-                  Live Quality Score
+                  <FlaskConical className="h-5 w-5 text-muted-foreground" />
+                  Live LSF
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {loading || !metricsData ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
-                    <QualityScoreGauge value={metricsData.clinkerQualityScore || 0} />
+                    <QualityScoreGauge value={metricsData.lsf || 0} maxValue={105} idealMin={94} idealMax={98} label="LSF" />
                 )}
               </CardContent>
             </Card>

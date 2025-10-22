@@ -13,7 +13,7 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, Zap, Award, Gauge, Lightbulb, Thermometer, TrendingDown, TrendingUp } from 'lucide-react';
+import { Bot, Zap, Award, Gauge, Lightbulb, Thermometer, FlaskConical, TrendingUp } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
@@ -47,9 +47,6 @@ function SubmitButton() {
 
 function RecommendationDisplay({ recommendation }: { recommendation: any }) {
     if (!recommendation) return null;
-
-    const qualityImpactPositive = recommendation.qualityScoreImpact.startsWith('+');
-    const TrendIcon = qualityImpactPositive ? TrendingUp : TrendingDown;
   
     return (
       <div className="space-y-6">
@@ -60,19 +57,16 @@ function RecommendationDisplay({ recommendation }: { recommendation: any }) {
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           <div className="flex flex-col gap-1">
-            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><Gauge /> Feed Rate</Label>
-            <p className="text-xl font-bold">{formatNumber(recommendation.feedRateSetpoint, { decimals: 1 })} <span className="text-base font-normal text-muted-foreground">TPH</span></p>
+            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><FlaskConical /> Limestone Adj.</Label>
+            <p className="text-xl font-bold">{recommendation.limestoneAdjustment}</p>
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><Zap /> Energy Savings</Label>
-            <p className="text-xl font-bold text-green-500">{formatNumber(recommendation.energyReductionPercentage, { decimals: 1 })}%</p>
+            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><FlaskConical /> Clay Adj.</Label>
+            <p className="text-xl font-bold">{recommendation.clayAdjustment}</p>
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><Award /> Quality Impact</Label>
-            <p className={`text-xl font-bold flex items-center ${qualityImpactPositive ? 'text-green-500' : 'text-red-500'}`}>
-                <TrendIcon className="h-4 w-4 mr-1" />
-                {recommendation.qualityScoreImpact}
-            </p>
+            <Label className="text-sm font-normal text-muted-foreground flex items-center gap-1"><TrendingUp /> Predicted LSF</Label>
+            <p className="text-xl font-bold text-green-500">{formatNumber(recommendation.predictedLSF, { decimals: 1 })}%</p>
           </div>
         </div>
 
@@ -91,8 +85,11 @@ function RecommendationDisplay({ recommendation }: { recommendation: any }) {
 type Metrics = {
     kilnTemperature?: number;
     feedRate?: number;
-    energyConsumption?: number;
-    clinkerQualityScore?: number;
+    lsf?: number;
+    cao?: number;
+    sio2?: number;
+    al2o3?: number;
+    fe2o3?: number;
 }
   
 export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics & { trigger?: boolean } }) {
@@ -113,7 +110,7 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
   }, [initialMetrics]);
 
   useEffect(() => {
-    if (initialMetrics.trigger && formRef.current) {
+    if (initialMetrics.trigger && formRef.current && metrics) {
         // Use a timeout to allow the form to render before submitting
         setTimeout(() => {
             if (formRef.current) {
@@ -122,7 +119,7 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
             }
         }, 100);
     }
-  }, [initialMetrics.trigger]);
+  }, [initialMetrics.trigger, metrics]);
 
 
   useEffect(() => {
@@ -139,24 +136,35 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
   return (
     <div className="grid gap-8 md:grid-cols-3">
         <form ref={formRef} action={formAction} className="md:col-span-1">
-            <input type="hidden" name="kilnTemperature" value={metrics?.kilnTemperature} />
-            <input type="hidden" name="feedRate" value={metrics?.feedRate} />
-            <input type="hidden" name="energyConsumption" value={metrics?.energyConsumption} />
-            <input type="hidden" name="clinkerQualityScore" value={metrics?.clinkerQualityScore} />
+            {metrics && (
+              <>
+                <input type="hidden" name="kilnTemperature" value={metrics.kilnTemperature} />
+                <input type="hidden" name="feedRate" value={metrics.feedRate} />
+                <input type="hidden" name="lsf" value={metrics.lsf} />
+                <input type="hidden" name="cao" value={metrics.cao} />
+                <input type="hidden" name="sio2" value={metrics.sio2} />
+                <input type="hidden" name="al2o3" value={metrics.al2o3} />
+                <input type="hidden" name="fe2o3" value={metrics.fe2o3} />
+              </>
+            )}
 
             <Card>
                 <CardHeader>
                     <CardTitle>Inputs</CardTitle>
                     <CardDescription>
-                    Live metrics from the plant. Add constraints to guide the AI.
+                    Live chemical and physical data from the plant.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    { !metrics ? <Skeleton className="h-24" /> : (
+                    { !metrics ? <Skeleton className="h-32" /> : (
                         <div className="space-y-2 text-sm text-muted-foreground">
                             <p className="flex justify-between"><span><Thermometer className="inline h-4 w-4 mr-1"/>Kiln Temp:</span> <span className="font-mono text-foreground">{formatNumber(metrics.kilnTemperature!)} °C</span></p>
                             <p className="flex justify-between"><span><Gauge className="inline h-4 w-4 mr-1"/>Feed Rate:</span> <span className="font-mono text-foreground">{formatNumber(metrics.feedRate!)} TPH</span></p>
-                            <p className="flex justify-between"><span><Award className="inline h-4 w-4 mr-1"/>Quality Score:</span> <span className="font-mono text-foreground">{formatNumber(metrics.clinkerQualityScore!, {decimals: 3})}</span></p>
+                            <p className="font-bold flex justify-between mt-2 pt-2 border-t"><span><FlaskConical className="inline h-4 w-4 mr-1"/>LSF:</span> <span className="font-mono text-foreground">{formatNumber(metrics.lsf!, {decimals: 1})}%</span></p>
+                            <p className="flex justify-between text-xs"><span>CaO:</span> <span className="font-mono text-foreground">{formatNumber(metrics.cao!)}%</span></p>
+                            <p className="flex justify-between text-xs"><span>SiO₂:</span> <span className="font-mono text-foreground">{formatNumber(metrics.sio2!)}%</span></p>
+                            <p className="flex justify-between text-xs"><span>Al₂O₃:</span> <span className="font-mono text-foreground">{formatNumber(metrics.al2o3!)}%</span></p>
+                            <p className="flex justify-between text-xs"><span>Fe₂O₃:</span> <span className="font-mono text-foreground">{formatNumber(metrics.fe2o3!)}%</span></p>
                         </div>
                     )}
                     <Separator />
@@ -165,8 +173,8 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
                         <Textarea
                             id="constraints"
                             name="constraints"
-                            placeholder="e.g., MAINTAIN_QUALITY_ABOVE_0.91, USE_ALT_FUEL_MIX"
-                            className="min-h-[100px]"
+                            placeholder="e.g., LSF_TARGET_95, MAX_TEMP_1480"
+                            className="min-h-[80px]"
                             disabled={pending}
                         />
                         <p className="text-xs text-muted-foreground">Separate constraints with a comma.</p>

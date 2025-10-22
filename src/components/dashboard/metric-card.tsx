@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Thermometer, Gauge, Zap, Award } from 'lucide-react';
+import { Thermometer, Gauge, Zap, Award, FlaskConical } from 'lucide-react';
 import React from 'react';
 
 const iconMap = {
@@ -15,6 +15,7 @@ const iconMap = {
   Gauge,
   Zap,
   Award,
+  FlaskConical,
 };
 
 type MetricCardProps = {

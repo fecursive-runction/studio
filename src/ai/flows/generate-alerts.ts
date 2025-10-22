@@ -14,7 +14,7 @@ import { z } from 'genkit';
 const GenerateAlertsInputSchema = z.object({
   kilnTemperature: z.number().describe('The current temperature of the kiln in degrees Celsius.'),
   feedRate: z.number().describe('The current feed rate of raw materials in tons per hour.'),
-  clinkerQualityScore: z.number().describe('The current clinker quality score (0-1).'),
+  lsf: z.number().describe('The current Lime Saturation Factor (LSF) of the raw mix.'),
 });
 export type GenerateAlertsInput = z.infer<typeof GenerateAlertsInputSchema>;
 
@@ -46,13 +46,13 @@ const prompt = ai.definePrompt({
     Current Plant State:
     - Kiln Temperature: {{{kilnTemperature}}} °C
     - Raw Material Feed Rate: {{{feedRate}}} tons/hour
-    - Clinker Quality Score: {{{clinkerQualityScore}}}
+    - Lime Saturation Factor (LSF): {{{lsf}}} %
   
-    Use the following rules to generate alerts. Generate between 2 and 4 alerts.
+    Use the following rules to generate alerts. The ideal LSF is between 94% and 98%. Generate between 2 and 4 alerts.
     - CRITICAL Alert (Icon: AlertTriangle): If Kiln Temperature > 1480°C or < 1420°C. Message should reflect the extreme temperature.
+    - WARNING Alert (Icon: AlertTriangle): If LSF is below 94% or above 98%. Message should indicate the LSF is out of spec and might affect clinker quality.
     - WARNING Alert (Icon: AlertTriangle): If Kiln Temperature is between 1470-1480°C or 1420-1430°C.
-    - WARNING Alert (Icon: AlertTriangle): If Clinker Quality Score < 0.90. Message should indicate low quality.
-    - INFO Alert (Icon: Info): If all metrics are within normal operating parameters. The message should state that operations are normal.
+    - INFO Alert (Icon: Info): If all metrics are within normal operating parameters. The message should state that operations are normal and LSF is stable.
     - INFO Alert (Icon: Info): Provide an informational alert about a routine check or status if other conditions are not met.
     - Create a unique ID for each alert.
     

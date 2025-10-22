@@ -7,49 +7,64 @@ const getRandom = (min: number, max: number, decimals: number = 2) => {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
 };
 
-// Function to simulate a more realistic clinker quality score based on temperature
-const calculateQualityScore = (temp: number) => {
-    const optimalTemp = 1450;
-    const deviation = Math.abs(temp - optimalTemp);
-    let score = 0.95 - (deviation / 50) * 0.1; // Quality decreases as temp deviates from optimal
-    score += (Math.random() - 0.5) * 0.02; // Add some noise
-    return Math.max(0.85, Math.min(0.98, score)); // Clamp score between 0.85 and 0.98
+// Function to calculate Lime Saturation Factor (LSF)
+const calculateLSF = (cao: number, sio2: number, al2o3: number, fe2o3: number) => {
+    const denominator = (2.8 * sio2 + 1.2 * al2o3 + 0.65 * fe2o3);
+    if (denominator === 0) return 0;
+    return (cao / denominator) * 100;
 }
 
 /**
  * API route handler for ingesting data.
- * This endpoint generates a new mock production metric and saves it to the local SQLite database.
+ * This endpoint generates a new mock production metric based on chemical principles and saves it to the local SQLite database.
  */
 export async function POST(req: Request) {
   try {
     const db = await getDb();
 
-    // Generate more connected data
-    const kiln_temp = getRandom(1415, 1485); // Widen range for more alerts
+    // Simulate more realistic, chemically-linked data
+    const kiln_temp = getRandom(1415, 1485);
     const feed_rate = getRandom(210, 230);
-    const clinker_quality_score = calculateQualityScore(kiln_temp);
     
-    // Energy consumption based on temp and feed rate
-    const energy_kwh_per_ton = 95 + (kiln_temp - 1400) / 10 + (feed_rate - 200) / 5 + getRandom(-1, 1);
+    // Simulate raw material composition. Introduce fluctuations.
+    const base_cao = 43.5;
+    const base_sio2 = 13.5;
+    const base_al2o3 = 3.5;
+    const base_fe2o3 = 2.0;
+
+    // CaO and SiO2 are the main levers, so they fluctuate more.
+    const cao = getRandom(base_cao - 1.5, base_cao + 1.5);
+    const sio2 = getRandom(base_sio2 - 1, base_sio2 + 1);
+    const al2o3 = getRandom(base_al2o3 - 0.2, base_al2o3 + 0.2);
+    const fe2o3 = getRandom(base_fe2o3 - 0.2, base_fe2o3 + 0.2);
+
+    // Calculate LSF based on the simulated composition
+    const lsf = calculateLSF(cao, sio2, al2o3, fe2o3);
 
     const newMetric = {
         timestamp: new Date().toISOString(),
         plant_id: 'poc_plant_01',
         kiln_temp: parseFloat(kiln_temp.toFixed(2)),
         feed_rate: parseFloat(feed_rate.toFixed(2)),
-        energy_kwh_per_ton: parseFloat(energy_kwh_per_ton.toFixed(2)),
-        clinker_quality_score: parseFloat(clinker_quality_score.toFixed(3)),
+        lsf: parseFloat(lsf.toFixed(1)),
+        cao: parseFloat(cao.toFixed(2)),
+        sio2: parseFloat(sio2.toFixed(2)),
+        al2o3: parseFloat(al2o3.toFixed(2)),
+        fe2o3: parseFloat(fe2o3.toFixed(2)),
     };
 
     // Insert the new metric into the database
     await db.run(
-        'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, energy_kwh_per_ton, clinker_quality_score) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         newMetric.timestamp,
         newMetric.plant_id,
         newMetric.kiln_temp,
         newMetric.feed_rate,
-        newMetric.energy_kwh_per_ton,
-        newMetric.clinker_quality_score
+        newMetric.lsf,
+        newMetric.cao,
+        newMetric.sio2,
+        newMetric.al2o3,
+        newMetric.fe2o3
     );
 
     console.log('Ingested new live metric into SQLite:', newMetric);

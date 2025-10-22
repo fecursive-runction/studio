@@ -15,19 +15,22 @@ const OptimizeCementProductionInputSchema = z.object({
   plantId: z.string().describe('The ID of the cement plant.'),
   kilnTemperature: z.number().describe('The current temperature of the kiln in degrees Celsius.'),
   feedRate: z.number().describe('The current feed rate of raw materials in tons per hour.'),
-  energyConsumption: z.number().describe('The current energy consumption in kilowatt-hours per ton.'),
-  clinkerQualityScore: z.number().describe('The current clinker quality score (0-1).'),
-  constraints: z.array(z.string()).describe('A list of operational constraints (e.g., "temperature must not exceed 1500C", "quality must be above 0.90").'),
+  lsf: z.number().describe('The current Lime Saturation Factor (LSF) of the raw mix.'),
+  cao: z.number().describe('The current percentage of CaO in the raw mix.'),
+  sio2: z.number().describe('The current percentage of SiO2 in the raw mix.'),
+  al2o3: z.number().describe('The current percentage of Al2O3 in the raw mix.'),
+  fe2o3: z.number().describe('The current percentage of Fe2O3 in the raw mix.'),
+  constraints: z.array(z.string()).describe('A list of operational constraints (e.g., "LSF must be above 94%", "temperature must not exceed 1500C").'),
 });
 export type OptimizeCementProductionInput = z.infer<typeof OptimizeCementProductionInputSchema>;
 
 const OptimizeCementProductionOutputSchema = z.object({
   recommendationId: z.string().describe('A unique ID for the recommendation, e.g., "REC-20240521-001".'),
   feedRateSetpoint: z.number().describe('The recommended feed rate setpoint in tons per hour.'),
-  kilnRotationSpeed: z.number().describe('The recommended kiln rotation speed in RPM.'),
-  energyReductionPercentage: z.number().describe('The predicted percentage reduction in energy consumption.'),
-  qualityScoreImpact: z.string().describe('The predicted impact on the clinker quality score as a string, e.g., "+0.01", "-0.005".'),
-  explanation: z.string().describe('A clear, concise explanation of why this recommendation is being made, referencing the input data and constraints. Explain the trade-offs involved.'),
+  limestoneAdjustment: z.string().describe('Recommended adjustment to the limestone feed (source of CaO), e.g., "+2%" or "-1.5%".'),
+  clayAdjustment: z.string().describe('Recommended adjustment to the clay/shale feed (source of SiO2/Al2O3), e.g., "-1%" or "+0.5%".'),
+  predictedLSF: z.number().describe('The predicted LSF after the adjustments are made.'),
+  explanation: z.string().describe('A clear, concise explanation of why this recommendation is being made, referencing the input data and constraints. Explain the trade-offs involved, particularly how adjustments to the raw mix will affect the LSF.'),
   timestamp: z.string().datetime().describe('The ISO 8601 timestamp of when the recommendation was generated.'),
 });
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
@@ -41,24 +44,28 @@ const prompt = ai.definePrompt({
     name: 'optimizeCementProductionPrompt',
     input: {schema: OptimizeCementProductionInputSchema},
     output: {schema: OptimizeCementProductionOutputSchema},
-    prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide an optimal operational recommendation based on real-time data and constraints.
-  
+    prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide an optimal operational recommendation based on real-time chemical and physical data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
+
     Current Plant State (Plant ID: {{{plantId}}}):
     - Kiln Temperature: {{{kilnTemperature}}} °C
     - Raw Material Feed Rate: {{{feedRate}}} tons/hour
-    - Energy Consumption: {{{energyConsumption}}} kWh/ton
-    - Clinker Quality Score: {{{clinkerQualityScore}}}
-  
+    - Raw Mix Composition:
+        - CaO: {{{cao}}}%
+        - SiO2: {{{sio2}}}%
+        - Al2O3: {{{al2o3}}}%
+        - Fe2O3: {{{fe2o3}}}%
+    - Current LSF: {{{lsf}}}%
+
     Operational Constraints:
     {{#each constraints}}
     - {{{this}}}
     {{/each}}
-  
-    Your goal is to recommend setpoints that reduce energy consumption while maintaining or improving clinker quality, respecting all constraints.
-  
-    Generate a unique ID for this recommendation. Calculate the recommended feed rate, a new kiln rotation speed, and predict the impact on energy use and quality.
+
+    Your goal is to recommend adjustments to the raw material feed to correct the LSF. Limestone is the primary source of CaO. Clay/shale is the primary source of SiO2 and Al2O3. Recommend a percentage change for the limestone and clay feeders to achieve an LSF between 94% and 98%. Also recommend a new overall feed rate setpoint.
+
+    Generate a unique ID for this recommendation. Calculate the predicted LSF that will result from your suggested adjustments.
     
-    Provide a detailed, data-driven explanation for your recommendation. The explanation should be thorough, discussing the relationships between the parameters and the predicted outcomes. The timestamp should be the current time in ISO 8601 format.
+    Provide a detailed, data-driven explanation for your recommendation. The explanation must be thorough, discussing how the changes in raw mix will influence the LSF and clinker quality. The timestamp should be the current time in ISO 8601 format.
     
     Output a single JSON object adhering to the specified output schema.
     `,

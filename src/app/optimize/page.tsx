@@ -11,8 +11,11 @@ function OptimizationPageContent({
   const initialMetrics = {
     kilnTemperature: searchParams?.kilnTemperature ? Number(searchParams.kilnTemperature) : undefined,
     feedRate: searchParams?.feedRate ? Number(searchParams.feedRate) : undefined,
-    energyConsumption: searchParams?.energyConsumption ? Number(searchParams.energyConsumption) : undefined,
-    clinkerQualityScore: searchParams?.clinkerQualityScore ? Number(searchParams.clinkerQualityScore) : undefined,
+    lsf: searchParams?.lsf ? Number(searchParams.lsf) : undefined,
+    cao: searchParams?.cao ? Number(searchParams.cao) : undefined,
+    sio2: searchParams?.sio2 ? Number(searchParams.sio2) : undefined,
+    al2o3: searchParams?.al2o3 ? Number(searchParams.al2o3) : undefined,
+    fe2o3: searchParams?.fe2o3 ? Number(searchParams.fe2o3) : undefined,
     trigger: searchParams?.trigger === 'true',
   };
 
@@ -21,7 +24,7 @@ function OptimizationPageContent({
       <div className="mx-auto grid w-full max-w-4xl gap-2">
         <h1 className="text-3xl font-semibold">Production Optimization</h1>
         <p className="text-muted-foreground">
-          Use GenAI to get recommendations for optimizing plant operations based on current conditions and constraints.
+          Use GenAI to get recommendations for optimizing plant operations based on live chemical and physical data.
         </p>
       </div>
       <div className="mx-auto w-full max-w-4xl">

@@ -16,16 +16,22 @@ export async function getLiveMetrics() {
             return {
                 kilnTemperature: 1450,
                 feedRate: 220,
-                energyConsumption: 102,
-                clinkerQualityScore: 0.91,
+                lsf: 96,
+                cao: 44,
+                sio2: 14,
+                al2o3: 3.5,
+                fe2o3: 2.5,
             };
         }
 
         return {
             kilnTemperature: latestMetric.kiln_temp,
             feedRate: latestMetric.feed_rate,
-            energyConsumption: latestMetric.energy_kwh_per_ton,
-            clinkerQualityScore: latestMetric.clinker_quality_score,
+            lsf: latestMetric.lsf,
+            cao: latestMetric.cao,
+            sio2: latestMetric.sio2,
+            al2o3: latestMetric.al2o3,
+            fe2o3: latestMetric.fe2o3,
         };
     } catch (e: any) {
         console.error("Failed to get live metrics from SQLite:", e);
@@ -33,8 +39,11 @@ export async function getLiveMetrics() {
         return {
             kilnTemperature: 1450,
             feedRate: 220,
-            energyConsumption: 102,
-            clinkerQualityScore: 0.91,
+            lsf: 96,
+            cao: 44,
+            sio2: 14,
+            al2o3: 3.5,
+            fe2o3: 2.5,
         };
     }
 }
@@ -44,18 +53,15 @@ const optimizationSchema = z.object({
   constraints: z.string().optional(),
   kilnTemperature: z.string(),
   feedRate: z.string(),
-  energyConsumption: z.string(),
-  clinkerQualityScore: z.string(),
+  lsf: z.string(),
+  cao: z.string(),
+  sio2: z.string(),
+  al2o3: z.string(),
+  fe2o3: z.string(),
 });
 
 export async function runOptimization(prevState: any, formData: FormData) {
-  const validatedFields = optimizationSchema.safeParse({
-    constraints: formData.get('constraints'),
-    kilnTemperature: formData.get('kilnTemperature'),
-    feedRate: formData.get('feedRate'),
-    energyConsumption: formData.get('energyConsumption'),
-    clinkerQualityScore: formData.get('clinkerQualityScore'),
-  });
+  const validatedFields = optimizationSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
     console.error(validatedFields.error.flatten().fieldErrors);
@@ -72,9 +78,12 @@ export async function runOptimization(prevState: any, formData: FormData) {
         plantId: "poc_plant_01",
         kilnTemperature: Number(metrics.kilnTemperature),
         feedRate: Number(metrics.feedRate),
-        energyConsumption: Number(metrics.energyConsumption),
-        clinkerQualityScore: Number(metrics.clinkerQualityScore),
-        constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["MAINTAIN_QUALITY_ABOVE_0.90"],
+        lsf: Number(metrics.lsf),
+        cao: Number(metrics.cao),
+        sio2: Number(metrics.sio2),
+        al2o3: Number(metrics.al2o3),
+        fe2o3: Number(metrics.fe2o3),
+        constraints: constraints ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
     });
     
     return {
@@ -98,7 +107,7 @@ export async function getAiAlerts() {
         const alertResponse = await generateAlerts({
             kilnTemperature: liveMetrics.kilnTemperature,
             feedRate: liveMetrics.feedRate,
-            clinkerQualityScore: liveMetrics.clinkerQualityScore,
+            lsf: liveMetrics.lsf,
         });
 
         // Add a timestamp to each alert

@@ -86,8 +86,11 @@ export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
         const query = new URLSearchParams({
             kilnTemperature: liveMetrics.kilnTemperature,
             feedRate: liveMetrics.feedRate,
-            energyConsumption: liveMetrics.energyConsumption,
-            clinkerQualityScore: liveMetrics.clinkerQualityScore,
+            lsf: liveMetrics.lsf,
+            cao: liveMetrics.cao,
+            sio2: liveMetrics.sio2,
+            al2o3: liveMetrics.al2o3,
+            fe2o3: liveMetrics.fe2o3,
             trigger: 'true',
         });
       return (
