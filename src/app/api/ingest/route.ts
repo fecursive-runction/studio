@@ -7,9 +7,9 @@ const getRandom = (min: number, max: number, decimals: number = 2) => {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
 };
 
-// Function to calculate Lime Saturation Factor (LSF)
+// Function to calculate Lime Saturation Factor (LSF) using the correct formula
 const calculateLSF = (cao: number, sio2: number, al2o3: number, fe2o3: number) => {
-    const denominator = (2.8 * sio2 + 1.2 * al2o3 + 0.65 * fe2o3);
+    const denominator = (2.8 * sio2 + 1.18 * al2o3 + 0.65 * fe2o3);
     if (denominator === 0) return 0;
     return (cao / denominator) * 100;
 }
