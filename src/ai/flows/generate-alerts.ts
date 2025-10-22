@@ -14,7 +14,7 @@ import { z } from 'genkit';
 const GenerateAlertsInputSchema = z.object({
   kilnTemperature: z.number().describe('The current temperature of the kiln in degrees Celsius.'),
   feedRate: z.number().describe('The current feed rate of raw materials in tons per hour.'),
-  lsf: z.number().describe('The current Lime Saturation Factor (LSF) of the raw mix.'),
+  lsf: z.string().describe('The current Lime Saturation Factor (LSF) of the raw mix, formatted as a string (e.g., "95.5").'),
 });
 export type GenerateAlertsInput = z.infer<typeof GenerateAlertsInputSchema>;
 
@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
     Current Plant State:
     - Kiln Temperature: {{{kilnTemperature}}} °C
     - Raw Material Feed Rate: {{{feedRate}}} tons/hour
-    - Lime Saturation Factor (LSF): {{{lsf}}} %
+    - Lime Saturation Factor (LSF): {{{lsf}}}%
   
     Use the following rules to generate alerts. The ideal LSF is between 94% and 98%. Generate between 2 and 4 alerts.
     - CRITICAL Alert (Icon: AlertTriangle): If Kiln Temperature > 1480°C or < 1420°C. Message should reflect the extreme temperature.

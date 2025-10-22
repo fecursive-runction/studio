@@ -52,7 +52,7 @@ export async function getLiveMetrics() {
 export async function getMetricsHistory() {
     try {
         const db = await getDb();
-        const history = await db.all('SELECT * FROM production_metrics ORDER BY timestamp DESC');
+        const history = await db.all('SELECT * FROM production_metrics ORDER BY timestamp DESC LIMIT 50');
         return history;
     } catch (e: any) {
         console.error("Failed to get metrics history from SQLite:", e);
@@ -172,7 +172,7 @@ export async function getAiAlerts() {
         const alertResponse = await generateAlerts({
             kilnTemperature: liveMetrics.kilnTemperature,
             feedRate: liveMetrics.feedRate,
-            lsf: liveMetrics.lsf,
+            lsf: liveMetrics.lsf.toFixed(1),
         });
 
         // Add a timestamp to each alert
