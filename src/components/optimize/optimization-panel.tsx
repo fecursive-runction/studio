@@ -144,13 +144,13 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
   
   useEffect(() => {
     async function loadInitialData() {
-        if (!initialMetrics.kilnTemperature) {
+        if (!metrics) {
             const liveMetrics = await getLiveMetrics();
             setMetrics(liveMetrics);
         }
     }
     loadInitialData();
-  }, [initialMetrics]);
+  }, [metrics]);
 
   useEffect(() => {
     if (initialMetrics.trigger && formRef.current && metrics) {
@@ -179,18 +179,6 @@ export function OptimizationPanel({ initialMetrics }: { initialMetrics: Metrics 
   return (
     <div className="grid gap-8 md:grid-cols-3">
         <form ref={formRef} action={formAction} className="md:col-span-1">
-            {metrics && (
-              <>
-                <input type="hidden" name="kilnTemperature" value={metrics.kilnTemperature} />
-                <input type="hidden" name="feedRate" value={metrics.feedRate} />
-                <input type="hidden" name="lsf" value={metrics.lsf} />
-                <input type="hidden" name="cao" value={metrics.cao} />
-                <input type="hidden" name="sio2" value={metrics.sio2} />
-                <input type="hidden" name="al2o3" value={metrics.al2o3} />
-                <input type="hidden" name="fe2o3" value={metrics.fe2o3} />
-              </>
-            )}
-
             <Card>
                 <CardHeader>
                     <CardTitle>Inputs</CardTitle>

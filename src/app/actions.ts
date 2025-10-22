@@ -74,13 +74,6 @@ export async function getMetricsHistory() {
 
 const optimizationSchema = z.object({
   constraints: z.string().optional(),
-  kilnTemperature: z.string(),
-  feedRate: z.string(),
-  lsf: z.string(),
-  cao: z.string(),
-  sio2: z.string(),
-  al2o3: z.string(),
-  fe2o3: z.string(),
 });
 
 
@@ -95,24 +88,27 @@ export async function runOptimization(prevState: any, formData: FormData) {
       recommendation: null,
     };
   }
-  const { constraints, ...metrics } = validatedFields.data;
   
-  const currentMetrics = {
-    plantId: "poc_plant_01",
-    kilnTemperature: parseFloat(metrics.kilnTemperature),
-    feedRate: parseFloat(metrics.feedRate),
-    lsf: parseFloat(metrics.lsf),
-    cao: parseFloat(metrics.cao),
-    sio2: parseFloat(metrics.sio2),
-    al2o3: parseFloat(metrics.al2o3),
-    fe2o3: parseFloat(metrics.fe2o3),
-    constraints: (constraints && constraints.trim().length > 0) ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
-  };
-
-
   try {
-    // Single, consolidated call to the AI flow
-    const aiRecommendation = await optimizeCementProduction(currentMetrics);
+    // 1. Get fresh, reliable data directly from the database.
+    const liveMetrics = await getLiveMetrics();
+    
+    // 2. Prepare the data for the AI.
+    const { constraints } = validatedFields.data;
+    const aiInput = {
+      plantId: "poc_plant_01",
+      kilnTemperature: liveMetrics.kilnTemperature,
+      feedRate: liveMetrics.feedRate,
+      lsf: liveMetrics.lsf,
+      cao: liveMetrics.cao,
+      sio2: liveMetrics.sio2,
+      al2o3: liveMetrics.al2o3,
+      fe2o3: liveMetrics.fe2o3,
+      constraints: (constraints && constraints.trim().length > 0) ? constraints.split(',').map(c => c.trim()) : ["TARGET_LSF_94_98"],
+    };
+
+    // 3. Make a single, consolidated call to the AI flow
+    const aiRecommendation = await optimizeCementProduction(aiInput);
 
     const finalRecommendation = {
         ...aiRecommendation,
@@ -125,7 +121,7 @@ export async function runOptimization(prevState: any, formData: FormData) {
     };
 
   } catch (e: any) {
-    console.error(e);
+    console.error("Error in runOptimization:", e);
     return {
       ...prevState,
       error: e.message || 'An error occurred while generating the recommendation.',
