@@ -11,12 +11,12 @@ import {
   BarChart,
 } from 'lucide-react';
 import { AlertFeed } from '@/components/dashboard/alert-feed';
-import { alerts as mockAlerts, historicalTemperatureData } from '@/lib/data';
+import { historicalTemperatureData } from '@/lib/data';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-import { getLiveMetrics } from '@/app/actions';
+import { getLiveMetrics, getAiAlerts } from '@/app/actions';
 
 
 type MetricsData = {
@@ -26,8 +26,18 @@ type MetricsData = {
     clinkerQualityScore?: number;
 };
 
+type Alert = {
+    id: string;
+    timestamp: Date;
+    severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'RESOLVED';
+    message: string;
+    icon: 'AlertTriangle' | 'Info' | 'ShieldCheck';
+};
+
+
 export default function DashboardPage() {
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Set up the interval to trigger data ingestion and fetching
@@ -41,6 +51,8 @@ export default function DashboardPage() {
     const fetchAndSetMetrics = async () => {
         try {
             const data = await getLiveMetrics();
+            const aiAlerts = await getAiAlerts();
+            
             if (data) {
                 setMetricsData({
                     kilnTemperature: data.kilnTemperature,
@@ -49,8 +61,12 @@ export default function DashboardPage() {
                     clinkerQualityScore: data.clinkerQualityScore,
                 });
             }
+            if (aiAlerts) {
+                setAlerts(aiAlerts);
+            }
+
         } catch(e) {
-            console.error("Failed to fetch metrics", e);
+            console.error("Failed to fetch metrics or alerts", e);
         } finally {
             if (loading) {
                 setLoading(false);
@@ -147,7 +163,7 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
-            <AlertFeed alerts={mockAlerts.map(a => ({...a, timestamp: new Date(a.timestamp)}))} />
+            <AlertFeed alerts={alerts} />
           </div>
         </div>
       </main>

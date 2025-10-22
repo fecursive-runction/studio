@@ -1,4 +1,5 @@
 
+
 export const alerts = [
   {
     id: 'alert_xyz',
@@ -36,7 +37,7 @@ export const alerts = [
     value: null,
     icon: 'ShieldCheck',
   },
-];
+].map(a => ({...a, timestamp: new Date(a.timestamp)}));
 
 const generateData = () => {
   const data = [];

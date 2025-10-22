@@ -1,6 +1,7 @@
 'use server';
 
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
+import { generateAlerts } from '@/ai/flows/generate-alerts';
 import { z } from 'zod';
 import { getDb } from '@/lib/db';
 
@@ -82,4 +83,32 @@ export async function runOptimization(prevState: any, formData: FormData) {
       recommendation: null,
     };
   }
+}
+
+export async function getAiAlerts() {
+    try {
+        const liveMetrics = await getLiveMetrics();
+        const alertResponse = await generateAlerts({
+            kilnTemperature: liveMetrics.kilnTemperature,
+            feedRate: liveMetrics.feedRate,
+            clinkerQualityScore: liveMetrics.clinkerQualityScore,
+        });
+
+        // Add a timestamp to each alert
+        return alertResponse.alerts.map(alert => ({
+            ...alert,
+            timestamp: new Date(),
+        }));
+
+    } catch (e: any) {
+        console.error("Failed to get AI alerts:", e);
+        // Return a default error alert if the AI fails
+        return [{
+            id: 'err-alert',
+            timestamp: new Date(),
+            severity: 'WARNING',
+            message: 'Could not retrieve AI-powered alerts.',
+            icon: 'AlertTriangle',
+        }];
+    }
 }
