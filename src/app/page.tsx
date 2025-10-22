@@ -28,14 +28,13 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json();
           setMetricsData(data);
+          // Only set loading to false after we have data
+          if (loading) {
+            setLoading(false);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch live metrics:', error);
-      } finally {
-        // Only set loading to false after the first fetch completes
-        if (loading) {
-          setLoading(false);
-        }
       }
     };
 
@@ -54,14 +53,16 @@ export default function DashboardPage() {
       clearInterval(dataIngestInterval);
       clearInterval(dataFetchInterval);
     };
-  }, [loading]); // Rerunning on loading change is fine for the initial load pattern.
+    // The dependency array ensures this setup runs only once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
 
   const chartData = historicalTemperatureData;
 
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-            {loading || !metricsData ? (
+            {loading ? (
                 <>
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
@@ -118,7 +119,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {loading || !metricsData ? (
+                {loading ? (
                     <Skeleton className="h-[200px]" />
                 ) : (
                     <QualityScoreGauge value={metricsData?.clinker_quality_score || 0} />
