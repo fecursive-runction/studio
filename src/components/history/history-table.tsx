@@ -37,8 +37,10 @@ type Metric = {
 
 export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
   const [metrics, setMetrics] = useState(initialMetrics);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const interval = setInterval(async () => {
         const newMetrics = await getMetricsHistory();
         setMetrics(newMetrics);
@@ -81,7 +83,7 @@ export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
               {metrics.map((metric: any) => (
                 <TableRow key={metric.id}>
                   <TableCell className="font-mono text-xs">
-                    {new Date(metric.timestamp).toLocaleString()}
+                    {isClient ? new Date(metric.timestamp).toLocaleString() : ""}
                   </TableCell>
                   <TableCell>
                     {formatNumber(metric.kiln_temp, { decimals: 1 })}°C

@@ -76,7 +76,7 @@ export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {isClient ? alert.timestamp.toLocaleTimeString() : ''}
+              {isClient ? new Date(alert.timestamp).toLocaleTimeString() : ''}
             </p>
           </div>
         </div>
