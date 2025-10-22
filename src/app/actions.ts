@@ -22,10 +22,6 @@ export async function getLiveMetrics() {
                 sio2: 14,
                 al2o3: 3.5,
                 fe2o3: 2.5,
-                c3s: 55,
-                c2s: 20,
-                c3a: 9,
-                c4af: 10,
             };
         }
 
@@ -37,10 +33,6 @@ export async function getLiveMetrics() {
             sio2: latestMetric.sio2,
             al2o3: latestMetric.al2o3,
             fe2o3: latestMetric.fe2o3,
-            c3s: latestMetric.c3s,
-            c2s: latestMetric.c2s,
-            c3a: latestMetric.c3a,
-            c4af: latestMetric.c4af,
         };
     } catch (e: any) {
         console.error("Failed to get live metrics from SQLite:", e);
@@ -53,10 +45,6 @@ export async function getLiveMetrics() {
             sio2: 14,
             al2o3: 3.5,
             fe2o3: 2.5,
-            c3s: 55,
-            c2s: 20,
-            c3a: 9,
-            c4af: 10,
         };
     }
 }
@@ -91,14 +79,12 @@ export async function runOptimization(prevState: any, formData: FormData) {
   }
   
   try {
-    // 1. Get fresh, reliable data directly from the database. This is the robust way.
     const liveMetrics = await getLiveMetrics();
     
-    // 2. Prepare the data for the AI.
     const { constraints } = validatedFields.data;
     const constraintsList = (constraints && constraints.trim()) 
       ? constraints.split(',').map(c => c.trim()) 
-      : ["TARGET_LSF_94_98"]; // Default constraint if none provided
+      : ["TARGET_LSF_94_98"];
 
     const aiInput = {
       plantId: "poc_plant_01",
@@ -112,7 +98,6 @@ export async function runOptimization(prevState: any, formData: FormData) {
       constraints: constraintsList,
     };
 
-    // 3. Make a single, consolidated call to the AI flow
     const aiRecommendation = await optimizeCementProduction(aiInput);
 
     const finalRecommendation = {
@@ -144,16 +129,14 @@ export async function getAiAlerts() {
             lsf: liveMetrics.lsf,
         });
 
-        // Add a timestamp and unique ID to each alert
         return alertResponse.alerts.map((alert, index) => ({
             ...alert,
-            id: `alert-${Date.now()}-${index}`, // Generate a robust, unique ID
+            id: `alert-${Date.now()}-${index}`,
             timestamp: new Date(),
         }));
 
     } catch (e: any) {
         console.error("Failed to get AI alerts:", e);
-        // Return a default error alert if the AI fails
         return [{
             id: 'err-alert',
             timestamp: new Date(),
@@ -161,26 +144,6 @@ export async function getAiAlerts() {
             message: 'Could not retrieve AI-powered alerts.',
         }];
     }
-}
-
-// Function to calculate Lime Saturation Factor (LSF) using the correct formula
-const calculateLSF = (cao: number, sio2: number, al2o3: number, fe2o3: number) => {
-    const denominator = (2.8 * sio2 + 1.18 * al2o3 + 0.65 * fe2o3);
-    if (denominator === 0) return 0;
-    return (cao / denominator) * 100;
-}
-
-// Bogue's Equations to calculate clinker phases
-const calculateBogue = (cao: number, sio2: number, al2o3: number, fe2o3: number) => {
-    const cao_prime = cao; // Assuming free lime & SO3 are negligible for simulation
-    const c4af = 3.043 * fe2o3;
-    const c3a = 2.650 * al2o3 - 1.692 * fe2o3;
-    const c3s = 4.071 * cao_prime - 7.602 * sio2 - 6.719 * al2o3 - 1.430 * fe2o3;
-    const c2s = 2.867 * sio2 - 0.754 * c3s;
-    return {
-        c3s: Math.max(0, c3s), c2s: Math.max(0, c2s),
-        c3a: Math.max(0, c3a), c4af: Math.max(0, c4af)
-    };
 }
 
 
@@ -192,16 +155,12 @@ export async function applyOptimization(prevState: any, formData: FormData) {
     const limestoneAdj = parseFloat((formData.get('limestoneAdjustment') as string).replace('%', ''));
     const clayAdj = parseFloat((formData.get('clayAdjustment') as string).replace('%', ''));
 
-    // Apply adjustments to simulate new composition
-    // This is a simplified simulation. A real model would be more complex.
     const newCao = currentMetrics.cao * (1 + limestoneAdj / 100);
-    const newSio2 = currentMetrics.sio2 * (1 - clayAdj / 200); // Clay affects SiO2
-    const newAl2o3 = currentMetrics.al2o3 * (1 - clayAdj / 200); // and Al2O3
+    const newSio2 = currentMetrics.sio2 * (1 - clayAdj / 200);
+    const newAl2o3 = currentMetrics.al2o3 * (1 - clayAdj / 200);
 
     const newFeedRate = parseFloat(formData.get('feedRateSetpoint') as string);
-    const newKilnTemp = currentMetrics.kilnTemperature + (lsf > 98 ? -5 : (lsf < 94 ? 5 : 0)); // small adjustment
-
-    const boguePhases = calculateBogue(newCao, newSio2, currentMetrics.fe2o3, currentMetrics.fe2o3);
+    const newKilnTemp = currentMetrics.kilnTemperature + (lsf > 98 ? -5 : (lsf < 94 ? 5 : 0));
 
     const newMetric = {
         timestamp: new Date().toISOString(),
@@ -213,15 +172,11 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         sio2: parseFloat(newSio2.toFixed(2)),
         al2o3: parseFloat(newAl2o3.toFixed(2)),
         fe2o3: parseFloat(currentMetrics.fe2o3.toFixed(2)),
-        c3s: parseFloat(boguePhases.c3s.toFixed(2)),
-        c2s: parseFloat(boguePhases.c2s.toFixed(2)),
-        c3a: parseFloat(boguePhases.c3a.toFixed(2)),
-        c4af: parseFloat(boguePhases.c4af.toFixed(2)),
     };
     
     try {
         await db.run(
-            'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3, c3s, c2s, c3a, c4af) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             Object.values(newMetric)
         );
         return { success: true, message: 'Optimization applied successfully!' };
@@ -230,3 +185,5 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
+
+    

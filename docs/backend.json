@@ -77,7 +77,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ProductionMetric",
       "type": "object",
-      "description": "Represents aggregated production metrics for the cement plant, including chemical composition and Bogue's phases.",
+      "description": "Represents aggregated production metrics for the cement plant.",
       "properties": {
         "id": {
           "type": "integer",
@@ -89,7 +89,7 @@
           "description": "The timestamp of the production metric.",
           "format": "date-time"
         },
-        "plant_id": {
+        "plantId": {
           "type": "string",
           "description": "Reference to Plant. (Relationship: Plant 1:N ProductionMetric)"
         },
@@ -120,38 +120,18 @@
         "fe2o3": {
           "type": "number",
           "description": "Percentage of Iron(III) Oxide (Fe2O3) in the raw mix."
-        },
-        "c3s": {
-          "type": "number",
-          "description": "Percentage of Tricalcium Silicate (Alite), a Bogue's phase."
-        },
-        "c2s": {
-          "type": "number",
-          "description": "Percentage of Dicalcium Silicate (Belite), a Bogue's phase."
-        },
-        "c3a": {
-          "type": "number",
-          "description": "Percentage of Tricalcium Aluminate, a Bogue's phase."
-        },
-        "c4af": {
-          "type": "number",
-          "description": "Percentage of Tetracalcium Aluminoferrite, a Bogue's phase."
         }
       },
       "required": [
         "timestamp",
-        "plant_id",
+        "plantId",
         "kiln_temp",
         "feed_rate",
         "lsf",
         "cao",
         "sio2",
         "al2o3",
-        "fe2o3",
-        "c3s",
-        "c2s",
-        "c3a",
-        "c4af"
+        "fe2o3"
       ]
     },
     "AiRecommendation": {

@@ -19,13 +19,12 @@ const iconMap = {
   CRITICAL: AlertTriangle,
   WARNING: AlertTriangle,
   INFO: Info,
-  RESOLVED: ShieldCheck, // Kept for potential future use
 };
 
 type Alert = {
   id: string;
   timestamp: Date;
-  severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'RESOLVED';
+  severity: 'CRITICAL' | 'WARNING' | 'INFO';
   message: string;
 };
 
@@ -38,14 +37,12 @@ const severityStyles = {
   CRITICAL: 'bg-red-500 border-red-500 text-white',
   WARNING: 'bg-yellow-400 border-yellow-400 text-black',
   INFO: 'bg-blue-500 border-blue-500 text-white',
-  RESOLVED: 'bg-green-500 border-green-500 text-white',
 };
 
 const severityIconStyles = {
     CRITICAL: 'text-red-500',
     WARNING: 'text-yellow-500',
     INFO: 'text-blue-500',
-    RESOLVED: 'text-green-500',
   };
 
 export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
@@ -56,7 +53,6 @@ export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
   }, []);
 
   const AlertItem = ({ alert }: { alert: Alert }) => {
-    // Determine the icon based on severity, with a fallback
     const Icon = iconMap[alert.severity] || Info;
     const isActionable = (alert.severity === 'CRITICAL' || alert.severity === 'WARNING') && liveMetrics;
 
@@ -124,3 +120,5 @@ export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
     </Card>
   );
 }
+
+    

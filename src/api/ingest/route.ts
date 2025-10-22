@@ -11,34 +11,13 @@ const getRandom = (min: number, max: number, decimals: number = 2) => {
 const calculateLSF = (cao: number, sio2: number, al2o3: number, fe2o3: number) => {
     const denominator = (2.8 * sio2 + 1.18 * al2o3 + 0.65 * fe2o3);
     if (denominator === 0) return 0;
-    return (cao / denominator) * 100;
+    const lsf = (cao / denominator) * 100;
+    return isFinite(lsf) ? lsf : 0;
 }
-
-// Bogue's Equations to calculate clinker phases
-const calculateBogue = (cao: number, sio2: number, al2o3: number, fe2o3: number) => {
-    // Assuming free lime and SO3 are negligible for this simulation
-    const cao_prime = cao;
-
-    const c4af_calc = 3.043 * fe2o3;
-    const c3a_calc = 2.650 * al2o3 - 1.692 * fe2o3;
-    const c3s_calc = 4.071 * cao_prime - 7.602 * sio2 - 6.719 * al2o3 - 1.430 * fe2o3;
-    const c2s_calc = 2.867 * sio2 - 0.754 * c3s_calc;
-    
-    // Return non-negative values, and default to 0 if NaN or Infinity
-    const ensureValidNumber = (num: number) => isFinite(num) ? Math.max(0, num) : 0;
-
-    return {
-        c3s: ensureValidNumber(c3s_calc),
-        c2s: ensureValidNumber(c2s_calc),
-        c3a: ensureValidNumber(c3a_calc),
-        c4af: ensureValidNumber(c4af_calc)
-    };
-}
-
 
 /**
  * API route handler for ingesting data.
- * This endpoint generates a new mock production metric based on chemical principles and saves it to the local SQLite database.
+ * This endpoint generates a new mock production metric and saves it to the local SQLite database.
  */
 export async function POST(req: Request) {
   try {
@@ -54,7 +33,6 @@ export async function POST(req: Request) {
     const base_al2o3 = 3.5;
     const base_fe2o3 = 2.0;
 
-    // CaO and SiO2 are the main levers, so they fluctuate more.
     const cao = getRandom(base_cao - 1.5, base_cao + 1.5);
     const sio2 = getRandom(base_sio2 - 1, base_sio2 + 1);
     const al2o3 = getRandom(base_al2o3 - 0.2, base_al2o3 + 0.2);
@@ -62,9 +40,6 @@ export async function POST(req: Request) {
 
     // Calculate LSF based on the simulated composition
     const lsf = calculateLSF(cao, sio2, al2o3, fe2o3);
-
-    // Calculate Bogue's phases
-    const boguePhases = calculateBogue(cao, sio2, al2o3, fe2o3);
 
     const newMetric = {
         timestamp: new Date().toISOString(),
@@ -76,15 +51,11 @@ export async function POST(req: Request) {
         sio2: parseFloat(sio2.toFixed(2)),
         al2o3: parseFloat(al2o3.toFixed(2)),
         fe2o3: parseFloat(fe2o3.toFixed(2)),
-        c3s: parseFloat(boguePhases.c3s.toFixed(2)),
-        c2s: parseFloat(boguePhases.c2s.toFixed(2)),
-        c3a: parseFloat(boguePhases.c3a.toFixed(2)),
-        c4af: parseFloat(boguePhases.c4af.toFixed(2)),
     };
 
     // Insert the new metric into the database
     await db.run(
-        'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3, c3s, c2s, c3a, c4af) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         Object.values(newMetric)
     );
 

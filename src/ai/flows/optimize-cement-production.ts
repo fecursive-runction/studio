@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -24,7 +25,6 @@ const OptimizeCementProductionInputSchema = z.object({
 });
 export type OptimizeCementProductionInput = z.infer<typeof OptimizeCementProductionInputSchema>;
 
-// The AI is now responsible for the core numeric recommendations AND the explanation.
 const OptimizeCementProductionOutputSchema = z.object({
   recommendationId: z.string().describe('A unique ID for the recommendation, e.g., "REC-20240521-001".'),
   feedRateSetpoint: z.number().describe('A number representing the recommended feed rate setpoint in tons per hour.'),
@@ -56,7 +56,7 @@ const prompt = ai.definePrompt({
         - Fe2O3: {{{fe2o3}}}%
     - Current LSF: {{{lsf}}}%
 
-    The following are natural language operational constraints. Interpret them to guide your recommendation.
+    Operational Constraints:
     {{#each constraints}}
     - {{{this}}}
     {{/each}}
@@ -84,3 +84,5 @@ const prompt = ai.definePrompt({
       return output!;
     }
   );
+
+    

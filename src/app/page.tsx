@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -5,12 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import {
   LineChart,
@@ -32,10 +27,6 @@ type MetricsData = {
     sio2: number;
     al2o3: number;
     fe2o3: number;
-    c3s: number;
-    c2s: number;
-    c3a: number;
-    c4af: number;
 };
 
 type Alert = {
@@ -138,84 +129,38 @@ export default function DashboardPage() {
 
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Tabs defaultValue="process" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="process">Process & Chemistry</TabsTrigger>
-            <TabsTrigger value="bogue">Clinker Phases (Bogue)</TabsTrigger>
-          </TabsList>
-          <TabsContent value="process">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {loading || !metricsData ? (
-                  Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)
-              ) : (
-                  <>
-                      <MetricCard
-                          title="Kiln Temperature"
-                          value={(metricsData.kilnTemperature || 0).toFixed(1)}
-                          unit="°C"
-                          icon="Thermometer"
-                      />
-                      <MetricCard
-                          title="Feed Rate"
-                          value={(metricsData.feedRate || 0).toFixed(1)}
-                          unit="TPH"
-                          icon="Zap"
-                      />
-                       <MetricCard
-                          title="Lime Saturation (LSF)"
-                          value={(metricsData.lsf || 0).toFixed(1)}
-                          unit="%"
-                          icon="FlaskConical"
-                      />
-                      <MetricCard
-                          title="CaO"
-                          value={(metricsData.cao || 0).toFixed(2)}
-                          unit="%"
-                          icon="FlaskConical"
-                      />
-                  </>
-              )}
-            </div>
-          </TabsContent>
-          <TabsContent value="bogue">
-             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {loading || !metricsData ? (
-                  Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)
-              ) : (
-                  <>
-                      <MetricCard
-                          title="C₃S (Alite)"
-                          value={(metricsData.c3s || 0).toFixed(1)}
-                          unit="%"
-                          icon="Component"
-                          description="Strength dev."
-                      />
-                      <MetricCard
-                          title="C₂S (Belite)"
-                          value={(metricsData.c2s || 0).toFixed(1)}
-                          unit="%"
-                          icon="Component"
-                          description="Late strength"
-                      />
-                      <MetricCard
-                          title="C₃A"
-                          value={(metricsData.c3a || 0).toFixed(1)}
-                          unit="%"
-                          icon="Beaker"
-                          description="Early strength"
-                      />
-                      <MetricCard
-                          title="C₄AF"
-                          value={(metricsData.c4af || 0).toFixed(1)}
-                          unit="%"
-                          icon="Beaker"
-                          description="Flux agent"
-                      />
-                  </>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {loading || !metricsData ? (
+              Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)
+          ) : (
+              <>
+                  <MetricCard
+                      title="Kiln Temperature"
+                      value={(metricsData.kilnTemperature || 0).toFixed(1)}
+                      unit="°C"
+                      icon="Thermometer"
+                  />
+                  <MetricCard
+                      title="Feed Rate"
+                      value={(metricsData.feedRate || 0).toFixed(1)}
+                      unit="TPH"
+                      icon="Zap"
+                  />
+                    <MetricCard
+                      title="Lime Saturation (LSF)"
+                      value={(metricsData.lsf || 0).toFixed(1)}
+                      unit="%"
+                      icon="FlaskConical"
+                  />
+                  <MetricCard
+                      title="CaO"
+                      value={(metricsData.cao || 0).toFixed(2)}
+                      unit="%"
+                      icon="FlaskConical"
+                  />
+              </>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-7">
           <Card className="lg:col-span-4">
             <CardHeader>
@@ -254,3 +199,5 @@ export default function DashboardPage() {
       </main>
   );
 }
+
+    
