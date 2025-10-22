@@ -14,7 +14,7 @@ import { AlertFeed } from '@/components/dashboard/alert-feed';
 import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getLiveMetrics, getAiAlerts, getMetricsHistory } from '@/app/actions';
 
 
@@ -41,12 +41,14 @@ type ChartDataPoint = {
   temperature: number;
 };
 
+const MAX_CHART_POINTS = 50;
 
 export default function DashboardPage() {
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const isInitialMount = useRef(true);
 
   // Set up the interval to trigger data ingestion (but not fetching)
   useEffect(() => {
@@ -66,38 +68,60 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchAndSetData = async () => {
         try {
-            // Fetch metrics, alerts, and chart data in parallel
-            const [data, aiAlerts, history] = await Promise.all([
-                getLiveMetrics(),
-                getAiAlerts(),
-                getMetricsHistory(), // Fetch history for the chart
-            ]);
+            if (isInitialMount.current) {
+                // On initial load, fetch the full history to populate the chart
+                const [data, aiAlerts, history] = await Promise.all([
+                    getLiveMetrics(),
+                    getAiAlerts(),
+                    getMetricsHistory(),
+                ]);
+                if (data) setMetricsData(data);
+                if (aiAlerts) setAlerts(aiAlerts);
+                if (history) {
+                    const transformedChartData = history
+                        .map((metric: any) => ({
+                            time: new Date(metric.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            temperature: metric.kiln_temp,
+                        }))
+                        .reverse(); // Chronological order
+                    setChartData(transformedChartData.slice(-MAX_CHART_POINTS));
+                }
+            } else {
+                // On subsequent polls, only fetch the latest metric and alerts
+                const [data, aiAlerts] = await Promise.all([
+                    getLiveMetrics(),
+                    getAiAlerts(),
+                ]);
 
-            if (data) {
-                setMetricsData(data);
-            }
-            if (aiAlerts) {
-                setAlerts(aiAlerts);
-            }
-            if (history) {
-                // Transform history data for the temperature chart
-                const transformedChartData = history
-                    .map((metric: any) => ({
-                        time: new Date(metric.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        temperature: metric.kiln_temp,
-                    }))
-                    .reverse(); // Reverse to show oldest data first
-                setChartData(transformedChartData);
+                if (data) {
+                    setMetricsData(data);
+                    // Append the new data point to the chart
+                    setChartData(prevData => {
+                        const newDataPoint = {
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            temperature: data.kilnTemperature,
+                        };
+                        const updatedData = [...prevData, newDataPoint];
+                        // Keep the chart data array from growing indefinitely
+                        return updatedData.slice(-MAX_CHART_POINTS);
+                    });
+                }
+                if (aiAlerts) {
+                    setAlerts(aiAlerts);
+                }
             }
         } catch(e) {
             console.error("Failed to fetch dashboard data", e);
         } finally {
-            if (loading) setLoading(false);
+            if (loading) {
+              setLoading(false);
+              isInitialMount.current = false;
+            }
         }
     };
     
     fetchAndSetData(); // Fetch immediately on mount
-    const interval = setInterval(fetchAndSetData, 5000); // Poll every 5 seconds
+    const interval = setInterval(fetchAndSetData, 60000); // Poll every 60 seconds
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, [loading]);

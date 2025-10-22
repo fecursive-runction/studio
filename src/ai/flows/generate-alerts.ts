@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
     - Raw Material Feed Rate: {{{feedRate}}} tons/hour
     - Lime Saturation Factor (LSF): {{{lsf}}}%
   
-    Use the following rules to generate alerts. The ideal LSF is between 94% and 98%. Generate between 2 and 4 alerts.
+    Use the following rules to generate alerts. The ideal LSF is between 94% and 98%. You MUST generate between 2 and 4 alerts.
     - CRITICAL Alert (Icon: AlertTriangle): If Kiln Temperature > 1480°C or < 1420°C. Message should reflect the extreme temperature.
     - WARNING Alert (Icon: AlertTriangle): If LSF is below 94% or above 98%. Message should indicate the LSF is out of spec and might affect clinker quality.
     - WARNING Alert (Icon: AlertTriangle): If Kiln Temperature is between 1470-1480°C or 1420-1430°C.
