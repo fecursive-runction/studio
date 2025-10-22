@@ -61,7 +61,7 @@ const generateData = () => {
     });
   }
   // We only want to show a few labels on the chart
-  return data.map((d, i) => i % (3 * 60) === 0 ? d : ({...d, time: ''}));
+  return data.map((d, i) => (i % 36 === 0 ? d : { ...d, time: '' }));
 };
 
 export const historicalTemperatureData = generateData();

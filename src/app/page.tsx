@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -23,7 +22,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Function to fetch live metrics from our new API route
     const fetchLiveMetrics = async () => {
       try {
         const response = await fetch('/api/metrics/live');
@@ -34,30 +32,31 @@ export default function DashboardPage() {
       } catch (error) {
         console.error('Failed to fetch live metrics:', error);
       } finally {
-        setLoading(false);
+        // Only set loading to false after the first fetch completes
+        if (loading) {
+          setLoading(false);
+        }
       }
     };
 
-    // Periodically call the ingest endpoint to simulate live data
+    // Immediately trigger the first fetch for live metrics and data ingestion
+    fetchLiveMetrics();
+    fetch('/api/ingest', { method: 'POST' });
+    
+    // Set up intervals for subsequent updates
+    const dataFetchInterval = setInterval(fetchLiveMetrics, 5000);
     const dataIngestInterval = setInterval(() => {
       fetch('/api/ingest', { method: 'POST' });
-    }, 5000); // every 5 seconds
-
-    // Periodically fetch the latest data
-    const dataFetchInterval = setInterval(fetchLiveMetrics, 5000);
-
-    // Initial fetches
-    fetch('/api/ingest', { method: 'POST' });
-    fetchLiveMetrics();
+    }, 5000);
 
     // Clean up intervals on component unmount
     return () => {
       clearInterval(dataIngestInterval);
       clearInterval(dataFetchInterval);
     };
-  }, []);
+  }, [loading]); // Rerunning on loading change is fine for the initial load pattern.
 
-  const chartData = historicalTemperatureData.map((d, i) => i % 36 === 0 ? d : ({...d, time: ''}));
+  const chartData = historicalTemperatureData;
 
   return (
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -107,11 +106,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              {loading ? (
-                <Skeleton className="h-[350px]" />
-              ) : (
                 <TemperatureChart data={chartData} />
-              )}
             </CardContent>
           </Card>
           <div className="grid gap-4 lg:col-span-3 lg:grid-cols-1">
