@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -5,6 +6,7 @@ import { Inter } from 'next/font/google';
 import { AppHeader } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/sidebar';
+import { DataProvider } from '@/context/data-provider';
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -29,14 +31,16 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        <div className="flex min-h-screen w-full">
-          <Sidebar />
-          <div className="flex flex-1 flex-col sm:gap-4 sm:py-4 sm:pl-14">
-            <AppHeader />
-            {children}
+        <DataProvider>
+          <div className="flex min-h-screen w-full">
+            <Sidebar />
+            <div className="flex flex-1 flex-col sm:gap-4 sm:py-4 sm:pl-14">
+              <AppHeader />
+              {children}
+            </div>
           </div>
-        </div>
-        <Toaster />
+          <Toaster />
+        </DataProvider>
       </body>
     </html>
   );

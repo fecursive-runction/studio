@@ -19,8 +19,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatNumber } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useState, useEffect } from 'react';
-import { getMetricsHistory } from '@/app/actions';
+import { useState, useEffect, useContext } from 'react';
+import { DataContext } from '@/context/data-provider';
 
 type Metric = {
     id: number;
@@ -39,18 +39,12 @@ type Metric = {
 };
 
 
-export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
-  const [metrics, setMetrics] = useState(initialMetrics);
+export function HistoryTable() {
+  const { metricsHistory } = useContext(DataContext);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    const interval = setInterval(async () => {
-        const newMetrics = await getMetricsHistory();
-        setMetrics(newMetrics as Metric[]);
-    }, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(interval);
   }, []);
 
   const getLsfBadgeVariant = (lsf: number) => {
@@ -88,7 +82,7 @@ export function HistoryTable({ initialMetrics }: { initialMetrics: Metric[] }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {metrics.map((metric: any) => (
+              {metricsHistory.map((metric: any) => (
                 <TableRow key={metric.id}>
                   <TableCell className="font-mono text-xs">
                     {isClient ? new Date(metric.timestamp).toLocaleString() : ""}
