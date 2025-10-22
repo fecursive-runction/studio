@@ -10,12 +10,9 @@ let dbPromise: Promise<Database<sqlite3.Database, sqlite3.Statement>> | null = n
 async function setupDatabase(db: Database) {
     console.log("Setting up database...");
     
-    await db.exec("DROP TABLE IF EXISTS production_metrics;");
-    console.log("Dropped existing 'production_metrics' table for schema update.");
-
-    // Create the new table with the simplified schema (no Bogue's phases)
+    // Create the table only if it doesn't exist. DO NOT DROP IT.
     await db.exec(`
-        CREATE TABLE production_metrics (
+        CREATE TABLE IF NOT EXISTS production_metrics (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL,
             plant_id TEXT NOT NULL,
@@ -28,7 +25,7 @@ async function setupDatabase(db: Database) {
             fe2o3 REAL NOT NULL
         );
     `);
-    console.log("Database table 'production_metrics' is ready with simplified schema.");
+    console.log("Database table 'production_metrics' is ready.");
 }
 
 
