@@ -26,7 +26,7 @@ const AlertSchema = z.object({
 });
 
 const GenerateAlertsOutputSchema = z.object({
-    alerts: z.array(AlertSchema).describe("An array of generated alerts based on the input metrics."),
+    alerts: z.array(AlertSchema).describe("An array of generated alerts. Can be empty if no alerts are warranted."),
 });
 export type GenerateAlertsOutput = z.infer<typeof GenerateAlertsOutputSchema>;
 
@@ -47,13 +47,16 @@ const prompt = ai.definePrompt({
     - Raw Material Feed Rate: {{{feedRate}}} tons/hour
     - Lime Saturation Factor (LSF): {{{lsf}}}
   
-    Use the following rules to generate alerts. The ideal LSF is between 94 and 98.
-    - If all metrics are within normal operating parameters (Kiln Temp 1430-1470, LSF 94-98), generate EXACTLY ONE INFO alert with the message "Operations normal, LSF stable.".
+    Use the following rules to generate alerts.
+    - Ideal Kiln Temperature is between 1430°C and 1470°C.
+    - Ideal Lime Saturation Factor (LSF) is between 94% and 98%.
     - CRITICAL Alert: If Kiln Temperature > 1480°C or < 1420°C. Message should reflect the extreme temperature.
-    - WARNING Alert: If LSF is below 94 or above 98. Message should indicate the LSF is out of spec and might affect clinker quality.
     - WARNING Alert: If Kiln Temperature is between 1470-1480°C or 1420-1430°C.
+    - WARNING Alert: If LSF is below 94 or above 98. Message should indicate the LSF is out of spec and might affect clinker quality.
     
-    Return a JSON object containing an 'alerts' array. Do not generate a RESOLVED alert.
+    If all metrics are within their ideal ranges, return an empty array for the 'alerts' field.
+    Do not generate an INFO alert if operations are normal.
+    Return a valid JSON object matching the output schema.
     `,
   });
   
@@ -68,4 +71,5 @@ const prompt = ai.definePrompt({
       return output!;
     }
   );
+
 

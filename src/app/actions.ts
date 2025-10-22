@@ -129,6 +129,10 @@ export async function getAiAlerts() {
             lsf: liveMetrics.lsf,
         });
 
+        if (!alertResponse || !alertResponse.alerts) {
+            return [];
+        }
+
         return alertResponse.alerts.map((alert, index) => ({
             ...alert,
             id: `alert-${Date.now()}-${index}`,
@@ -177,7 +181,7 @@ export async function applyOptimization(prevState: any, formData: FormData) {
     try {
         await db.run(
             'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            Object.values(newMetric)
+            ...Object.values(newMetric)
         );
         return { success: true, message: 'Optimization applied successfully!' };
     } catch (error: any) {
@@ -185,5 +189,3 @@ export async function applyOptimization(prevState: any, formData: FormData) {
         return { success: false, message: 'Failed to apply optimization.' };
     }
 }
-
-    

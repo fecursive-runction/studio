@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     // Insert the new metric into the database
     await db.run(
         'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, lsf, cao, sio2, al2o3, fe2o3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        Object.values(newMetric)
+        ...Object.values(newMetric)
     );
 
     console.log('Ingested new live metric into SQLite:', newMetric);
@@ -67,5 +67,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'Failed to ingest data.', error: error.message }, { status: 500 });
   }
 }
-
-    
