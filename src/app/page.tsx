@@ -16,49 +16,65 @@ import { TemperatureChart } from '@/components/dashboard/temperature-chart';
 import { QualityScoreGauge } from '@/components/dashboard/quality-score-gauge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-import { doc, getFirestore, onSnapshot, DocumentData } from 'firebase/firestore';
-import { app } from '@/firebase/client';
+import { getLiveMetrics } from '@/app/actions';
+
+
+type MetricsData = {
+    kiln_temp?: number;
+    feed_rate?: number;
+    energy_kwh_per_ton?: number;
+    clinker_quality_score?: number;
+};
 
 export default function DashboardPage() {
-  const [metricsData, setMetricsData] = useState<DocumentData | null>(null);
+  const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Set up the real-time listener for live metrics
+  // Set up the interval to trigger data ingestion and fetching
   useEffect(() => {
-    const db = getFirestore(app);
-    const docRef = doc(db, 'plant-metrics', 'live');
+    // Function to ingest new data
+    const ingestData = async () => {
+      await fetch('/api/ingest', { method: 'POST' });
+    };
 
-    const unsubscribe = onSnapshot(docRef, (doc) => {
-      if (doc.exists()) {
-        setMetricsData(doc.data());
-      } else {
-        console.log("No live metric document found!");
-      }
-      // Stop showing skeletons once we get the first response, even if it's empty
-      setLoading(false); 
-    }, (error) => {
-      console.error("Firestore snapshot error:", error);
-      setLoading(false); // Stop loading on error as well
-    });
+    // Function to fetch the latest data for the UI
+    const fetchAndSetMetrics = async () => {
+        try {
+            const data = await getLiveMetrics();
+            setMetricsData({
+                kiln_temp: data.kilnTemperature,
+                feed_rate: data.feedRate,
+                energy_kwh_per_ton: data.energyConsumption,
+                clinker_quality_score: data.clinkerQualityScore,
+            });
+        } catch(e) {
+            console.error("Failed to fetch metrics", e);
+        } finally {
+            // Stop showing skeletons once we have tried fetching, even if it fails
+            if (loading) {
+                setLoading(false);
+            }
+        }
+    };
 
-    // Clean up the listener when the component unmounts
-    return () => unsubscribe();
-  }, []);
-
-  // Set up the interval to trigger data ingestion
-  useEffect(() => {
-    const ingestData = () => {
-        fetch('/api/ingest', { method: 'POST' });
+    // Run both immediately on mount
+    const initialLoad = async () => {
+        await ingestData();
+        await fetchAndSetMetrics();
     }
-    // Immediately trigger the first ingestion
-    ingestData();
-    const dataIngestInterval = setInterval(ingestData, 5000);
+    initialLoad();
+
+    // Then run them on an interval
+    const interval = setInterval(() => {
+        ingestData();
+        fetchAndSetMetrics();
+    }, 5000); // every 5 seconds
 
     // Clean up interval on component unmount
     return () => {
-      clearInterval(dataIngestInterval);
+      clearInterval(interval);
     };
-  }, []); 
+  }, [loading]); // Depend on loading to ensure the finally block runs correctly once
 
 
   const chartData = historicalTemperatureData;

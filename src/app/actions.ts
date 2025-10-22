@@ -2,15 +2,33 @@
 
 import { optimizeCementProduction } from '@/ai/flows/optimize-cement-production';
 import { z } from 'zod';
-import { Firestore } from '@google-cloud/firestore';
+import { getDb } from '@/lib/db';
 
-const firestore = new Firestore();
+export async function getLiveMetrics() {
+    try {
+        const db = await getDb();
+        // Fetch the most recent record from the database
+        const latestMetric = await db.get('SELECT * FROM production_metrics ORDER BY timestamp DESC LIMIT 1');
 
-async function getLiveMetrics() {
-    const docRef = firestore.collection('plant-metrics').doc('live');
-    const doc = await docRef.get();
-    if (!doc.exists) {
-        // Return a default/fallback state if no live data is available yet
+        if (!latestMetric) {
+            // Return a default/fallback state if the database is empty
+            return {
+                kilnTemperature: 1450,
+                feedRate: 220,
+                energyConsumption: 102,
+                clinkerQualityScore: 0.91,
+            };
+        }
+
+        return {
+            kilnTemperature: latestMetric.kiln_temp,
+            feedRate: latestMetric.feed_rate,
+            energyConsumption: latestMetric.energy_kwh_per_ton,
+            clinkerQualityScore: latestMetric.clinker_quality_score,
+        };
+    } catch (e: any) {
+        console.error("Failed to get live metrics from SQLite:", e);
+        // Return default values on error
         return {
             kilnTemperature: 1450,
             feedRate: 220,
@@ -18,13 +36,6 @@ async function getLiveMetrics() {
             clinkerQualityScore: 0.91,
         };
     }
-    const data = doc.data();
-    return {
-        kilnTemperature: data?.kiln_temp || 1450,
-        feedRate: data?.feed_rate || 220,
-        energyConsumption: data?.energy_kwh_per_ton || 102,
-        clinkerQualityScore: data?.clinker_quality_score || 0.91,
-    };
 }
 
 

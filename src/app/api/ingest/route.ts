@@ -1,36 +1,20 @@
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const firestore = getFirestore(app);
-
+import { getDb } from '@/lib/db';
 
 // Function to generate a random number within a range
 const getRandom = (min: number, max: number, decimals: number = 2) => {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
 };
 
-
 /**
  * API route handler for ingesting data.
- * This endpoint can be triggered by a scheduler (e.g., Cloud Scheduler).
- * It generates a new mock production metric and saves it to Firestore.
+ * This endpoint generates a new mock production metric and saves it to the local SQLite database.
  */
 export async function POST(req: Request) {
   try {
-    // Generate a new production metric record
+    const db = await getDb();
+
     const newMetric = {
         timestamp: new Date().toISOString(),
         plant_id: 'poc_plant_01',
@@ -40,18 +24,22 @@ export async function POST(req: Request) {
         clinker_quality_score: getRandom(0.88, 0.95, 3),
     };
 
-    // Save the new metric to a specific document in Firestore for live data
-    // This overwrites the previous live metric with the new one.
-    const docRef = doc(firestore, 'plant-metrics', 'live');
-    await setDoc(docRef, newMetric);
+    // Insert the new metric into the database
+    await db.run(
+        'INSERT INTO production_metrics (timestamp, plant_id, kiln_temp, feed_rate, energy_kwh_per_ton, clinker_quality_score) VALUES (?, ?, ?, ?, ?, ?)',
+        newMetric.timestamp,
+        newMetric.plant_id,
+        newMetric.kiln_temp,
+        newMetric.feed_rate,
+        newMetric.energy_kwh_per_ton,
+        newMetric.clinker_quality_score
+    );
 
-    console.log('Ingested new live metric:', newMetric);
+    console.log('Ingested new live metric into SQLite:', newMetric);
 
-    // Respond with success
     return NextResponse.json({ success: true, message: 'Data ingested successfully.', ingested_data: newMetric }, { status: 200 });
   } catch (error: any) {
     console.error('Error in ingestion route:', error);
-    // Respond with an error
     return NextResponse.json({ success: false, message: 'Failed to ingest data.', error: error.message }, { status: 500 });
   }
 }
