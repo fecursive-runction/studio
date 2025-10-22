@@ -25,15 +25,14 @@ const AlertSchema = z.object({
 });
 
 const GenerateAlertsOutputSchema = z.object({
-    alerts: z.array(AlertSchema).describe("An array of generated alerts. Can be empty if no alerts are warranted."),
+    alerts: z.array(AlertSchema).describe("An array of generated alerts. MUST be an empty array if no alerts are warranted."),
 });
 export type GenerateAlertsOutput = z.infer<typeof GenerateAlertsOutputSchema>;
 
 
 export async function generateAlerts(input: GenerateAlertsInput): Promise<GenerateAlertsOutput> {
-  const model = googleAI.model('gemini-1.5-pro-latest');
   const { output } = await ai.generate({
-    model,
+    model: 'gemini-1.5-pro-latest',
     prompt: `You are an AI monitoring system for a cement plant. Your task is to generate alerts based on the following live data.
   
     Current Plant State:
@@ -57,7 +56,7 @@ export async function generateAlerts(input: GenerateAlertsInput): Promise<Genera
       schema: GenerateAlertsOutputSchema,
     },
     config: {
-      temperature: 0.1, // Lower temperature for more deterministic output
+      temperature: 0.1,
     }
   });
 

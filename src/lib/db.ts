@@ -10,9 +10,13 @@ let dbPromise: Promise<Database<sqlite3.Database, sqlite3.Statement>> | null = n
 async function setupDatabase(db: Database) {
     console.log("Setting up database...");
     
-    // Create the table only if it doesn't exist. DO NOT DROP IT.
+    // For development, we drop the table to ensure schema changes are applied.
+    // In a production environment, you would use a migration system.
+    await db.exec("DROP TABLE IF EXISTS production_metrics;");
+    console.log("Dropped existing 'production_metrics' table for schema update.");
+
     await db.exec(`
-        CREATE TABLE IF NOT EXISTS production_metrics (
+        CREATE TABLE production_metrics (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL,
             plant_id TEXT NOT NULL,
@@ -41,5 +45,3 @@ export async function getDb() {
   }
   return dbPromise;
 }
-
-    

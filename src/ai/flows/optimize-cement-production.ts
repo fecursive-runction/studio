@@ -36,9 +36,8 @@ const OptimizeCementProductionOutputSchema = z.object({
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
 
 export async function optimizeCementProduction(input: OptimizeCementProductionInput): Promise<OptimizeCementProductionOutput> {
-  const model = googleAI.model('gemini-1.5-pro-latest');
   const { output } = await ai.generate({
-    model,
+    model: 'gemini-1.5-pro-latest',
     prompt: `You are an expert AI process engineer for a cement plant. Your task is to provide optimal operational setpoints AND an explanation based on real-time data. The primary goal is to bring the Lime Saturation Factor (LSF) into the ideal range of 94-98%.
 
     Current Plant State (Plant ID: ${input.plantId}):

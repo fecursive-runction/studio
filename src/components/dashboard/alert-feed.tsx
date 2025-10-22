@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Bell, AlertTriangle, Info, ShieldCheck } from 'lucide-react';
+import { Bell, AlertTriangle, Info } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -18,13 +18,12 @@ import { cn } from '@/lib/utils';
 const iconMap = {
   CRITICAL: AlertTriangle,
   WARNING: AlertTriangle,
-  INFO: Info,
 };
 
 type Alert = {
   id: string;
   timestamp: Date;
-  severity: 'CRITICAL' | 'WARNING' | 'INFO';
+  severity: 'CRITICAL' | 'WARNING';
   message: string;
 };
 
@@ -36,13 +35,11 @@ type AlertFeedProps = {
 const severityStyles = {
   CRITICAL: 'bg-red-500 border-red-500 text-white',
   WARNING: 'bg-yellow-400 border-yellow-400 text-black',
-  INFO: 'bg-blue-500 border-blue-500 text-white',
 };
 
 const severityIconStyles = {
     CRITICAL: 'text-red-500',
     WARNING: 'text-yellow-500',
-    INFO: 'text-blue-500',
   };
 
 export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
@@ -120,5 +117,3 @@ export function AlertFeed({ alerts, liveMetrics }: AlertFeedProps) {
     </Card>
   );
 }
-
-    

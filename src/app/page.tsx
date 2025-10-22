@@ -32,7 +32,7 @@ type MetricsData = {
 type Alert = {
     id: string;
     timestamp: Date;
-    severity: 'CRITICAL' | 'WARNING' | 'INFO';
+    severity: 'CRITICAL' | 'WARNING';
     message: string;
 };
 
@@ -76,7 +76,7 @@ export default function DashboardPage() {
                     getMetricsHistory(),
                 ]);
                 if (data) setMetricsData(data);
-                if (aiAlerts) setAlerts(aiAlerts);
+                if (aiAlerts) setAlerts(aiAlerts as Alert[]);
                 if (history) {
                     const transformedChartData = history
                         .map((metric: any) => ({
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                     });
                 }
                 if (aiAlerts) {
-                    setAlerts(aiAlerts);
+                    setAlerts(aiAlerts as Alert[]);
                 }
             }
         } catch(e) {
@@ -199,5 +199,3 @@ export default function DashboardPage() {
       </main>
   );
 }
-
-    
