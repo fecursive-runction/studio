@@ -24,14 +24,13 @@ const OptimizeCementProductionInputSchema = z.object({
 });
 export type OptimizeCementProductionInput = z.infer<typeof OptimizeCementProductionInputSchema>;
 
+// The AI is now only responsible for the core recommendation and explanation.
 const OptimizeCementProductionOutputSchema = z.object({
   recommendationId: z.string().describe('A unique ID for the recommendation, e.g., "REC-20240521-001".'),
   feedRateSetpoint: z.number().describe('The recommended feed rate setpoint in tons per hour.'),
   limestoneAdjustment: z.string().describe('Recommended adjustment to the limestone feed (source of CaO), e.g., "+2%" or "-1.5%".'),
   clayAdjustment: z.string().describe('Recommended adjustment to the clay/shale feed (source of SiO2/Al2O3), e.g., "-1%" or "+0.5%".'),
-  predictedLSF: z.number().describe('The predicted LSF after the adjustments are made.'),
   explanation: z.string().describe('A clear, concise explanation of why this recommendation is being made, referencing the input data and constraints. Explain the trade-offs involved, particularly how adjustments to the raw mix will affect the LSF.'),
-  timestamp: z.string().datetime().describe('The ISO 8601 timestamp of when the recommendation was generated.'),
 });
 export type OptimizeCementProductionOutput = z.infer<typeof OptimizeCementProductionOutputSchema>;
 
@@ -63,11 +62,11 @@ const prompt = ai.definePrompt({
 
     Your goal is to recommend adjustments to the raw material feed to correct the LSF. Limestone is the primary source of CaO. Clay/shale is the primary source of SiO2 and Al2O3. Recommend a percentage change for the limestone and clay feeders to achieve an LSF between 94% and 98%. Also recommend a new overall feed rate setpoint.
 
-    Generate a unique ID for this recommendation. Calculate the predicted LSF that will result from your suggested adjustments.
+    Generate a unique ID for this recommendation.
     
-    Provide a detailed, data-driven explanation for your recommendation. The explanation must be thorough, discussing how the changes in raw mix will influence the LSF and clinker quality. The timestamp should be the current time in ISO 8601 format.
+    Provide a detailed, data-driven explanation for your recommendation. The explanation must be thorough, discussing how the changes in raw mix will influence the LSF and clinker quality.
     
-    Output a single JSON object adhering to the specified output schema.
+    Output a single JSON object adhering to the specified output schema. Do NOT calculate the predicted LSF or timestamp.
     `,
   });
   
@@ -82,3 +81,5 @@ const prompt = ai.definePrompt({
       return output!;
     }
   );
+
+    

@@ -30,7 +30,7 @@ export async function getLiveMetrics() {
             lsf: latestMetric.lsf,
             cao: latestMetric.cao,
             sio2: latestMetric.sio2,
-al2o3: latestMetric.al2o3,
+            al2o3: latestMetric.al2o3,
             fe2o3: latestMetric.fe2o3,
         };
     } catch (e: any) {
@@ -59,6 +59,26 @@ const optimizationSchema = z.object({
   al2o3: z.string(),
   fe2o3: z.string(),
 });
+
+/**
+ * Calculates a simplified predicted LSF based on adjustments.
+ * This is a proxy for a real chemical engineering model.
+ */
+function calculatePredictedLsf(currentLsf: number, limestoneAdj: string, clayAdj: string): number {
+    let predictedLsf = currentLsf;
+    const limestoneChange = parseFloat(limestoneAdj.replace('%', '')) || 0;
+    const clayChange = parseFloat(clayAdj.replace('%', '')) || 0;
+
+    // Limestone (CaO) has a strong positive effect on LSF.
+    predictedLsf += limestoneChange * 1.5;
+
+    // Clay (SiO2/Al2O3) has a negative effect on LSF.
+    predictedLsf -= clayChange * 0.5;
+
+    // Ensure the value is within a reasonable range
+    return Math.max(85, Math.min(105, predictedLsf));
+}
+
 
 export async function runOptimization(prevState: any, formData: FormData) {
   const validatedFields = optimizationSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -94,10 +114,18 @@ export async function runOptimization(prevState: any, formData: FormData) {
     });
 
     // Race the AI request against the timeout
-    const recommendation = await Promise.race([
+    const aiRecommendation = await Promise.race([
         optimizationRequest,
         timeoutPromise
     ]);
+
+    // Manually add the predicted LSF and timestamp after getting the AI response
+    const predictedLSF = calculatePredictedLsf(Number(metrics.lsf), aiRecommendation.limestoneAdjustment, aiRecommendation.clayAdjustment);
+    const recommendation = {
+        ...aiRecommendation,
+        predictedLSF: predictedLSF,
+        timestamp: new Date().toISOString(),
+    };
     
     return {
       error: null,
@@ -141,3 +169,5 @@ export async function getAiAlerts() {
         }];
     }
 }
+
+    
