@@ -135,15 +135,21 @@ export async function runOptimization(prevState: any, formData: FormData) {
     // 2. Calculate predicted LSF in code
     const predictedLSF = calculatePredictedLsf(currentMetrics.lsf, aiCoreRecommendation.limestoneAdjustment, aiCoreRecommendation.clayAdjustment);
     
-    // 3. Get explanation (slower, but happens after core results are known)
-    const explanation = await generateExplanation({
-        ...currentMetrics,
-        ...aiCoreRecommendation,
-        predictedLSF,
-    });
+    // 3. Prepare input for the explanation flow
+    const explanationInput = {
+        kilnTemperature: currentMetrics.kilnTemperature,
+        feedRate: currentMetrics.feedRate,
+        lsf: currentMetrics.lsf,
+        limestoneAdjustment: aiCoreRecommendation.limestoneAdjustment,
+        clayAdjustment: aiCoreRecommendation.clayAdjustment,
+        predictedLSF: predictedLSF,
+    };
+
+    // 4. Get explanation (slower, but happens after core results are known)
+    const explanation = await generateExplanation(explanationInput);
 
 
-    // 4. Combine results
+    // 5. Combine results
     const finalRecommendation = {
         ...aiCoreRecommendation,
         predictedLSF: predictedLSF,
