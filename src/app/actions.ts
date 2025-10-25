@@ -11,7 +11,7 @@ export async function getLiveMetrics() {
       .from('production_metrics')
       .select('*')
       .order('timestamp', { ascending: false })
-      .limit(1)
+      .limit(10)
       .maybeSingle();
 
     if (error) throw error;
