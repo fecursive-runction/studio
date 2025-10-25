@@ -8,6 +8,8 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env.local
+
 
 # Local Database
 # Prevents the local SQLite database from being committed.
